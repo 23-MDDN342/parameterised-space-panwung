@@ -1,5 +1,5 @@
 class OrthoCube {
-	constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, cubeScale=1, active=false) {
+	constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, active=false) {
 		this.points = [[
 			xCenter,  // Ax
 			yCenter	  // Ay
@@ -9,40 +9,42 @@ class OrthoCube {
 
 		this.viewAngle = viewAngleDeg * Math.PI / 180; // Conver to Rad
 		this.edgeLength = edgeLength;
-		this.cubeScale = cubeScale;
 	  
 		this.active = active;
 
 		this._buildPoints();
 	}
   
-	draw(raiseHeight=0) {
+	draw(topColor, leftColor, rightColor, raiseHeight=0, cubeScale=1) {
 		push();
-		scale(this.cubeScale);
+		scale(cubeScale);
 		translate(this.points[0][0], this.points[0][1]);
 
 		// Draws top rhombus
+		fill(topColor);
 		beginShape();
-		vertex(0, 0);								  // A
-		vertex(this.points[1][0], this.points[1][1]); // B
-		vertex(this.points[6][0], this.points[6][1]); // G
-		vertex(this.points[2][0], this.points[2][1]); // C
+		vertex(0, raiseHeight);						  				// A
+		vertex(this.points[1][0], this.points[1][1] + raiseHeight); // B
+		vertex(this.points[6][0], this.points[6][1] + raiseHeight); // G
+		vertex(this.points[2][0], this.points[2][1] + raiseHeight); // C
 		endShape(CLOSE);
 
 		// Draws left rhombus
+		fill(leftColor);
 		beginShape();
-		vertex(0, 0);								  // A
-		vertex(this.points[1][0], this.points[1][1]); // B
-		vertex(this.points[3][0], this.points[3][1]); // D
-		vertex(this.points[4][0], this.points[4][1]); // E
+		vertex(0, raiseHeight);						 				// A
+		vertex(this.points[1][0], this.points[1][1] + raiseHeight); // B
+		vertex(this.points[3][0], this.points[3][1] + raiseHeight); // D
+		vertex(this.points[4][0], this.points[4][1] + raiseHeight); // E
 		endShape(CLOSE);
 
 		// Draws right rhombus
+		fill(rightColor);
 		beginShape();
-		vertex(0, 0);								  // A
-		vertex(this.points[2][0], this.points[2][1]); // C
-		vertex(this.points[5][0], this.points[5][1]); // F
-		vertex(this.points[4][0], this.points[4][1]); // E
+		vertex(0, raiseHeight);								     	// A
+		vertex(this.points[2][0], this.points[2][1] + raiseHeight); // C
+		vertex(this.points[5][0], this.points[5][1] + raiseHeight); // F
+		vertex(this.points[4][0], this.points[4][1] + raiseHeight); // E
 		endShape(CLOSE);
 
 		pop();
@@ -98,7 +100,16 @@ class OrthoCube {
 }
   
 
-let test = new OrthoCube(200, 200, [0, 0], 120, 30);
+const ANGLE = 120;
+const EDGE_LENGTH = 30;
+const SEPARATION = 3;
+let translationAngle = (Math.PI * (360 - 2 * ANGLE)) / 720;
+let translationX = EDGE_LENGTH * Math.cos(translationAngle);
+let translationY = EDGE_LENGTH * Math.sin(translationAngle);
+
+
+let test1 = new OrthoCube(200, 200, undefined, ANGLE, EDGE_LENGTH);
+let test2 = new OrthoCube(200 + translationX + SEPARATION, 200 + translationY + SEPARATION, undefined, ANGLE, EDGE_LENGTH);
 
 
 var x = 300;
@@ -107,7 +118,8 @@ var a = 100;
 var b = 100;
 // this is the fireworks example
 function draw_one_frame() {
-	test.draw();
+	test1.draw(255, 200, 100);
+	test2.draw(255, 200, 100);
 
 	//background(255);
 	// x += 2;
