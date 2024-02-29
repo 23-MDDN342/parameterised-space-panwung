@@ -1,3 +1,28 @@
+class OrthoCube {
+	constructor(xCenter, yCenter, cubeScale, active=false) {
+	  this.xCenter = xCenter;
+	  this.yCenter = yCenter;
+	  this.cubeScale = cubeScale;
+	  this.active = active;
+	}
+  
+  
+	draw() {
+	  push();
+	  beginShape();
+  
+	  endShape(CLOSE);
+	  pop();
+	}
+  
+	_rotatePoint(x, y, theta) {
+	  // x1 = x0cos(θ) – y0sin(θ)
+	  // y1 = x0sin(θ) + y0cos(θ)
+	}
+  }
+  
+
+
 var x = 300;
 var y = 300;
 var a = 100;
@@ -47,5 +72,3 @@ function drawflower(i, k) {
 		arc(0, 0, (100 + 100 * cos(k * PI / 24)) % 255, 50, 0, PI / 20);
 	}
 }
-
-// will this push?

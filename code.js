@@ -27,7 +27,7 @@ function mousePressed(){
 }
 
 function draw () {
-  let animation_max_frames = frameMax * buffersPerFrame;
+   let animation_max_frames = frameMax * buffersPerFrame;
   let sticky_max_frames = animation_max_frames + stickFrame;
   let cur_frame = frameCount % sticky_max_frames;
   if (cur_frame >= animation_max_frames) {
@@ -60,7 +60,7 @@ function draw () {
   if(recording) {
     textSize(24);
     gifRecorder.addBuffer();
-  }
+  } 
 }
 
 function keyTyped() {
