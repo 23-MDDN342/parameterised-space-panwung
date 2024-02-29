@@ -15,36 +15,36 @@ class OrthoCube {
 		this._buildPoints();
 	}
   
-	draw(topColor, leftColor, rightColor, raiseHeight=0, cubeScale=1) {
+	draw(cubeCol, raiseHeight=0, cubeScale=1) {
 		push();
 		scale(cubeScale);
 		translate(this.points[0][0], this.points[0][1]);
 
 		// Draws top rhombus
-		fill(topColor);
+		fill(cubeCol);
 		beginShape();
-		vertex(0, raiseHeight);						  				// A
-		vertex(this.points[1][0], this.points[1][1] + raiseHeight); // B
-		vertex(this.points[6][0], this.points[6][1] + raiseHeight); // G
-		vertex(this.points[2][0], this.points[2][1] + raiseHeight); // C
+		vertex(0, - raiseHeight);						  				// A
+		vertex(this.points[1][0], this.points[1][1] - raiseHeight); // B
+		vertex(this.points[6][0], this.points[6][1] - raiseHeight); // G
+		vertex(this.points[2][0], this.points[2][1] - raiseHeight); // C
 		endShape(CLOSE);
 
 		// Draws left rhombus
-		fill(leftColor);
+		fill(cubeCol);
 		beginShape();
-		vertex(0, raiseHeight);						 				// A
-		vertex(this.points[1][0], this.points[1][1] + raiseHeight); // B
-		vertex(this.points[3][0], this.points[3][1] + raiseHeight); // D
-		vertex(this.points[4][0], this.points[4][1] + raiseHeight); // E
+		vertex(0, - raiseHeight);						 				// A
+		vertex(this.points[1][0], this.points[1][1] - raiseHeight); // B
+		vertex(this.points[3][0], this.points[3][1] - raiseHeight); // D
+		vertex(this.points[4][0], this.points[4][1] - raiseHeight); // E
 		endShape(CLOSE);
 
 		// Draws right rhombus
-		fill(rightColor);
+		fill(cubeCol);
 		beginShape();
-		vertex(0, raiseHeight);								     	// A
-		vertex(this.points[2][0], this.points[2][1] + raiseHeight); // C
-		vertex(this.points[5][0], this.points[5][1] + raiseHeight); // F
-		vertex(this.points[4][0], this.points[4][1] + raiseHeight); // E
+		vertex(0, - raiseHeight);								     	// A
+		vertex(this.points[2][0], this.points[2][1] - raiseHeight); // C
+		vertex(this.points[5][0], this.points[5][1] - raiseHeight); // F
+		vertex(this.points[4][0], this.points[4][1] - raiseHeight); // E
 		endShape(CLOSE);
 
 		pop();
@@ -100,9 +100,10 @@ class OrthoCube {
 }
 
 class CubeGrid {
-	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation) {
+	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, raiseHeight) {
 		this.x = x;
 		this.y = y;
+		this.raiseHeight = raiseHeight;
 
 		let translationAngle = (Math.PI * (360 - 2 * viewAngleDeg)) / 720;
 		let translationX = (edgeLength + separation) * Math.cos(translationAngle);
@@ -127,13 +128,14 @@ class CubeGrid {
 	draw() {
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
-				this.cubes[col][row].draw((col % 2 == 0) ? [255, 0, 0] : [0, 255, 0], 120, 0);
+				let cube = this.cubes[col][row];
+				cube.draw((col % 2 == 0) ? [255, 0, 0] : [0, 255, 0], (cube.active === true) ? this.raiseHeight : 0);
 			}
 		}
 	}
 
-	setActiveCube(row, col) {
-		this.cubes[col][row].active = true;
+	setActiveCube(row, col, active) {
+		this.cubes[col][row].active = active;
 	}
 }
 
@@ -146,8 +148,9 @@ const EDGE_LENGTH = 35;
 const SEPARATION = 3;
 const ROW_COUNT = 15;
 const COL_COUNT = 30;
+const RAISE_HEIGHT = 20;
 
-const grid = new CubeGrid(0, 0, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION);
+const grid = new CubeGrid(0, 0, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, RAISE_HEIGHT);
 
 
 
