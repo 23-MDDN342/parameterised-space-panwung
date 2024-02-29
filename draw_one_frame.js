@@ -132,8 +132,8 @@ class CubeGrid {
 		}
 	}
 
-	setActiveCube() {
-		
+	setActiveCube(row, col) {
+		this.cubes[col][row].active = true;
 	}
 }
 
