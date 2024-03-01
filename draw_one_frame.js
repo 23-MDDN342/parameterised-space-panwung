@@ -1,5 +1,5 @@
 class OrthoCube {
-	constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, active=false) {
+	constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, propagationDir=undefined, active=false) {
 		this.points = [[
 			xCenter,  // Ax
 			yCenter	  // Ay
@@ -9,39 +9,41 @@ class OrthoCube {
 
 		this.viewAngle = viewAngleDeg * Math.PI / 180; // Conver to Rad
 		this.edgeLength = edgeLength;
-	  
+
+		this.propagationDir = propagationDir;
+
 		this.active = active;
 
-		this._buildPoints();
+		this._initPoints();
 	}
   
-	draw(cubeCol, raiseHeight=0, cubeScale=1) {
+	draw(cubeCol, raiseHeight=0) {
 		push();
-		scale(cubeScale);
+		noStroke();
 		translate(this.points[0][0], this.points[0][1]);
 
 		// Draws top rhombus
-		fill(cubeCol);
+		fill(this._colorBrightness(cubeCol, 1));
 		beginShape();
-		vertex(0, - raiseHeight);						  				// A
+		vertex(0, - raiseHeight);						  			// A
 		vertex(this.points[1][0], this.points[1][1] - raiseHeight); // B
 		vertex(this.points[6][0], this.points[6][1] - raiseHeight); // G
 		vertex(this.points[2][0], this.points[2][1] - raiseHeight); // C
 		endShape(CLOSE);
 
 		// Draws left rhombus
-		fill(cubeCol);
+		fill(this._colorBrightness(cubeCol, 2/3));
 		beginShape();
-		vertex(0, - raiseHeight);						 				// A
+		vertex(0, - raiseHeight);						 			// A
 		vertex(this.points[1][0], this.points[1][1] - raiseHeight); // B
 		vertex(this.points[3][0], this.points[3][1] - raiseHeight); // D
 		vertex(this.points[4][0], this.points[4][1] - raiseHeight); // E
 		endShape(CLOSE);
 
 		// Draws right rhombus
-		fill(cubeCol);
+		fill(this._colorBrightness(cubeCol, 1/3));
 		beginShape();
-		vertex(0, - raiseHeight);								     	// A
+		vertex(0, - raiseHeight);								    // A
 		vertex(this.points[2][0], this.points[2][1] - raiseHeight); // C
 		vertex(this.points[5][0], this.points[5][1] - raiseHeight); // F
 		vertex(this.points[4][0], this.points[4][1] - raiseHeight); // E
@@ -60,7 +62,7 @@ class OrthoCube {
 	 *        •  •  •        *
 	 *           E           *
 	 *                       */
-	_buildPoints() {
+	_initPoints() {
 		let B = [
 			- this.edgeLength * Math.sin( this.viewAngle / 2 ), // Bx
 			- this.edgeLength * Math.cos( this.viewAngle / 2 )  // By
@@ -94,48 +96,150 @@ class OrthoCube {
 		this.points.push(B, C, D, E, F, G);
 	}
 
+	_colorBrightness(cubeColor, percentage) {
+		return [
+			cubeColor[0] * percentage, 
+			cubeColor[1] * percentage, 
+			cubeColor[2] * percentage
+		]
+	}
+
 	get x() { return this.points[0][0]; }
 	get y() { return this.points[0][1]; }
-  
+
+	get row() { return this.gridPos[0]; }
+	get col() { return this.gridPos[1]; }
 }
 
 class CubeGrid {
-	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, raiseHeight) {
+	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, maxRaiseHeight) {
 		this.x = x;
 		this.y = y;
-		this.raiseHeight = raiseHeight;
+		this.maxRaiseHeight = maxRaiseHeight;
 
 		let translationAngle = (Math.PI * (360 - 2 * viewAngleDeg)) / 720;
 		let translationX = (edgeLength + separation) * Math.cos(translationAngle);
 		let translationY = (edgeLength + separation) * Math.sin(translationAngle);
 
 		this.cubes = []; // 2D array of cubes
+		this.edgeCubes = [];
 
-		// even rows are 2row * translationX, odd rows are (2row + 1) * translationX
-		// even and odd cols are col * translationY
 		for (let col=0; col<maxCol; col++) {
 			let rowArray = [];
 			for (let row=0; row<maxRow; row++) {
-				let newX = x + ((col % 2 == 0) ? 2 * row * translationX : (2 * row + 1) * translationX);
-				let newY = y + col * translationY;
-				rowArray.push(new OrthoCube(newX, newY, [row, col], viewAngleDeg, edgeLength));
+				// let newX = x + ((col % 2 == 0) ? 2 * row * translationX : (2 * row + 1) * translationX);
+				// let newY = y + col * translationY;
+
+				let newX = x + row * translationX;
+				let newY = y + row * translationY;
+
+				let newCube = new OrthoCube(newX, newY, [row, col], viewAngleDeg, edgeLength)
+				rowArray.push(newCube);
+
+				// Exclude corner cubes
+				if (
+					!(row === 0 && col === 0) && 
+					!(row === 0 && col === maxCol - 1) &&
+					!(row === maxRow - 1 && col === 0) && 
+					!(row === maxRow - 1 && col === maxCol - 1)
+				) {
+					if (row === 0) {
+						newCube.propagationDir = [+1, 0];
+						this.edgeCubes.push(newCube); 
+					}
+					else if (row === maxRow - 1) {
+						newCube.propagationDir = [-1, 0];
+						this.edgeCubes.push(newCube);
+					}
+					else if (col === 0) {
+						newCube.propagationDir = [0, +1]
+						this.edgeCubes.push(newCube);
+					}
+					else if (col === maxCol - 1) {
+						newCube.propagationDir = [0, -1]
+						this.edgeCubes.push(newCube);
+					}
+				}
 			}
 			this.cubes.push(rowArray);
+			x -= translationX;
+			y += translationY;
 		}
-
 	}
 
 	draw() {
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				let cube = this.cubes[col][row];
-				cube.draw((col % 2 == 0) ? [255, 0, 0] : [0, 255, 0], (cube.active === true) ? this.raiseHeight : 0);
+				cube.draw((cube.active) ? [255, 0, 0] : [0, 255, 255], (cube.active === true) ? this.maxRaiseHeight : 0);
 			}
 		}
 	}
 
-	setActiveCube(row, col, active) {
-		this.cubes[col][row].active = active;
+	/**
+	 * Grab an activeCube
+	 * Figure out the nextCube based on the propagationDir
+	 * Set the nextCube to active and set its propigation to the activeCube's
+	 * Set activeCube.active to false
+	 * Set activeCube.propagationDir to undefined (unless it is in this.edgeCubes)
+	 * Add nextCube to an array to exclude from search of activeCubes
+	 */
+	propagateActiveCubes() {
+		let excludeFromSearch = [];
+
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+
+				// Grabs a cube that might be active
+				let activeCube = this.cubes[col][row]; 
+
+				// Checks if the cube is active and if it has not been excluded from search
+				if (activeCube.active && !excludeFromSearch.includes(activeCube)) {
+
+					// Calculates the next cube based on the active cubes propagation
+					let nextRow = activeCube.row + activeCube.propagationDir[0];
+					let nextCol = activeCube.col + activeCube.propagationDir[1];
+
+					// Checks if that propagation is in range of the main array
+					if (
+						nextRow >= 0 && nextRow < this.cubes[0].length &&
+						nextCol >= 0 && nextCol < this.cubes.length
+					) {
+						// Grabs the cube to propagate to
+						let nextCube = this.cubes[nextCol][nextRow];
+						
+						// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
+						// This has the unintended, but interesting, side effect of the active cube "rebounding"
+						nextCube.active = true;
+						if (!this.edgeCubes.includes(nextCube)) nextCube.propagationDir = activeCube.propagationDir;
+
+						// Exclude it from search
+						excludeFromSearch.push(nextCube);
+
+					}
+					
+					// Set the active cube to false and reset its propagation, unless it is an edge cube
+					activeCube.active = false;
+					if (!this.edgeCubes.includes(activeCube)) activeCube.propagationDir = undefined;
+				}
+			}
+		}
+	}
+
+	toggleCubeActive(row, col) {
+		this.cubes[col][row].active = !this.cubes[col][row].active;
+	}
+
+	toggleEdgeCubeActive() {
+		for (let cube of this.edgeCubes) {
+			this.toggleCubeActive(cube.row, cube.col);
+		}
+	}
+
+	setActiveRandomEdgeCube() {
+		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
+		console.log(edgeCube.gridPos);
+		edgeCube.active = true;
 	}
 }
 
@@ -144,19 +248,24 @@ class CubeGrid {
 
 
 const ANGLE = 120;
-const EDGE_LENGTH = 35;
-const SEPARATION = 3;
-const ROW_COUNT = 15;
-const COL_COUNT = 30;
+const EDGE_LENGTH = canvasHeight/9;
+const SEPARATION = 7;
+const ROW_COUNT = 23;
+const COL_COUNT = 23;
 const RAISE_HEIGHT = 20;
 
-const grid = new CubeGrid(0, 0, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, RAISE_HEIGHT);
+const grid = new CubeGrid(canvasWidth/2, -canvasHeight, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, RAISE_HEIGHT);
 
-
+let test = [1, 2, 3, 4]
 
 
 function draw_one_frame() {
+	
 	grid.draw();
+	grid.propagateActiveCubes();
+	
+	// noLoop();
+	
 }
 
 
