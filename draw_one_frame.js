@@ -232,7 +232,7 @@ class CubeGrid {
 	}
 
 	getAdjacentCubes(activeCube) {
-		let adjCubes = [];
+		let adjCubes = []; 
 		for (let col=-this.raiseRadius; col<=this.raiseRadius; col++) {
 			for (let row=-this.raiseRadius; row<=this.raiseRadius; row++) {
 
@@ -243,7 +243,12 @@ class CubeGrid {
 					checkRow >= 0 && checkRow < this.cubes[0].length &&
 					checkCol >= 0 && checkCol < this.cubes.length &&
 					!(row === 0 && col === 0)
-				) { adjCubes.push(this.cubes[checkCol][checkRow]); }
+				) { 
+					let cube = this.cubes[checkCol][checkRow];
+					if (Math.floor( 
+						Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) ) <= this.raiseRadius
+					) { adjCubes.push(cube); }
+				}
 			}
 		}
 		return adjCubes;
@@ -252,14 +257,18 @@ class CubeGrid {
 	raiseAdjacentCubes(activeCube) {
 		let adjCubes = this.getAdjacentCubes(activeCube);
 
+		// this causes problems with multiple cubes
 		for (let cube of this.raisedCubes) {
 			if (!adjCubes.includes(cube) && !cube.active) { cube.raiseHeight = 0; }
 		}
+		
 		this.raisedCubes = [];
 
 		for (let cube of adjCubes) {
 			let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
-			cube.raiseHeight = (this.maxRaiseHeight / (range + 1));
+			// cube.raiseHeight = (this.maxRaiseHeight / (range + 1));
+			
+			cube.raiseHeight = ((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius);
 		}
 
 		for (let cube of adjCubes) {
@@ -348,7 +357,7 @@ const SEPARATION = 5;
 const ROW_COUNT = 13; 
 const COL_COUNT = 13; 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH;
-const RAISE_RADIUS = 4;
+const RAISE_RADIUS = 6;
 
 const grid = new CubeGrid(canvasWidth/2, -canvasHeight/2, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 grid.setActiveRandomEdgeCube();
