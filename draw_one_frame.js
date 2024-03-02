@@ -336,21 +336,38 @@ class CubeGrid {
 
 
 const ANGLE = 120;
-const EDGE_LENGTH = canvasHeight/6;
+const EDGE_LENGTH = canvasHeight/20;
 const SEPARATION = 5;
+
+const X = canvasWidth/2	
+const Y = canvasHeight/6; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
 
 // 13x13 is perfect for rebounding, 24x24 is perfect for linear
 const ROW_COUNT = 13; 
 const COL_COUNT = 13; 
-const MAX_RAISE_HEIGHT = EDGE_LENGTH;
-const RAISE_RADIUS = 6;
 
-const grid = new CubeGrid(canvasWidth/2, -canvasHeight/2, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
+const MAX_RAISE_HEIGHT = EDGE_LENGTH;
+const RAISE_RADIUS = 7;
+
+const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
+
 grid.setActiveRandomEdgeCube();
 
+
+
 let test = [1, 2, 3, 4]
+
+let count = 0;
 
 function draw_one_frame() {
 	grid.draw([0, 255, 255], [255, 0, 0]);
 	grid.propagateActiveCubes();
+
+	if (count < 5) {
+		if (Math.random() > 0.95) {
+			grid.setActiveRandomEdgeCube();
+			count++;
+		}
+	}
+	
 }
