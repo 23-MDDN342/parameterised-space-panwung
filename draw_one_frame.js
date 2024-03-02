@@ -10,11 +10,11 @@ class OrthoCube {
 		this.viewAngle = viewAngleDeg * Math.PI / 180; // Conver to Rad
 		this.edgeLength = edgeLength;
 
-		this.propagationDir = propagationDir;
+		this.propagationDir = propagationDir; // The direction in which the cube moves
 
 		this.active = active;
 
-		this.raiseHeight = 0;
+		this.raiseHeight = 0; // How high to raise the cube above nornmal level
 
 		this._initPoints();
 	}
@@ -54,7 +54,10 @@ class OrthoCube {
 		pop();
 	}
 	
-	/*                       *
+	/*  
+	 * Calculates the points on the cube
+	 * 
+	 *                       *
 	 *           G           *
 	 *        •     •        *
 	 *     B           C     *
@@ -221,7 +224,7 @@ class CubeGrid {
 						excludeFromSearch.push(nextCube);
 
 						// Radiually influence the raise height of adjacent cubes
-						this.raiseAdjacentCubes(nextCube);
+						this._raiseAdjacentCubes(nextCube);
 					}
 					
 					// Set the active cube to false and reset its propagation, unless it is an edge cube
@@ -255,22 +258,12 @@ class CubeGrid {
 		return adjCubes;
 	}
 
-	raiseAdjacentCubes(activeCube) {
+	_raiseAdjacentCubes(activeCube) {
 		let adjCubes = this.getAdjacentCubes(activeCube);
 
 		for (let cube of adjCubes) {
 			let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
 			cube.raiseHeight = ( ((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight ) / 2;
-		}
-	}
-
-	toggleCubeActive(row, col) {
-		this.cubes[col][row].active = !this.cubes[col][row].active;
-	}
-
-	toggleEdgeCubeActive() {
-		for (let cube of this.edgeCubes) {
-			this.toggleCubeActive(cube.row, cube.col);
 		}
 	}
 
@@ -303,23 +296,25 @@ const ROW_COUNT = 13;
 const COL_COUNT = 13; 
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH;
-const RAISE_RADIUS = 5;
+const RAISE_RADIUS = 9;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
 grid.setActiveRandomEdgeCube();
 
 
-// let count = 0;
+let count = 0;
+const LIMIT = 10;
+const CHANCE = 0.05
 function draw_one_frame() {
 	grid.draw([0, 255, 255], [255, 0, 0]);
 	grid.propagateActiveCubes();
 
-	// if (count < 5) {
-	// 	if (Math.random() > 0.95) {
-	// 		grid.setActiveRandomEdgeCube();
-	// 		count++;
-	// 	}
-	// }
+	if (count < LIMIT) {
+		if (Math.random() > 1 - CHANCE) {
+			grid.setActiveRandomEdgeCube();
+			count++;
+		}
+	}
 	
 }
