@@ -262,50 +262,6 @@ class CubeGrid {
 			let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
 			cube.raiseHeight = ( ((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight ) / 2;
 		}
-
-
-
-		// for (let cube of adjCubes) {
-		// 	if (adjCubes.includes())
-		// }
-
-
-
-		// for (let col=-this.raiseRadius; col<=this.raiseRadius; col++) {
-		// 	for (let row=-this.raiseRadius; row<=this.raiseRadius; row++) {
-
-		// 		let checkRow = activeCube.row + row;
-		// 		let checkCol = activeCube.col + col;
-		// 		// Checks if this particular cube is in bounds
-		// 		if (
-		// 			checkRow >= 0 && checkRow < this.cubes[0].length &&
-		// 			checkCol >= 0 && checkCol < this.cubes.length &&
-		// 			!(row === 0 && col === 0)
-		// 		) {
-
-
-
-					// let cube = this.cubes[checkCol][checkRow];
-					
-					// let range = Math.ceil(Math.sqrt( Math.abs(row) ** 2 + Math.abs(col) ** 2 ));
-
-
-					// this is not working because when the actice cube mioves over the cubes left behind are no longer in range of hte loops
-					// consider adding all of the raised cubes to an array and the next time the acitve cube moves over,
-					// compare the current list to the previous list
-					// if (range > this.raiseRadius) { cube.raiseHeight = 0; console.log("CISFABFKSB") }
-					// console.log(range)
-					// cube.raiseHeight = ((this.maxRaiseHeight / (range + 1)) + cube.raiseHeight)/2;
-
-
-					// cube.raiseHeight = this.maxRaiseHeight / (range + 1)
-					
-						
-					// }
-					// else {  }
-				// }
-			// }
-		// }
 	}
 
 	toggleCubeActive(row, col) {
@@ -337,7 +293,7 @@ class CubeGrid {
 
 const ANGLE = 120;
 const EDGE_LENGTH = canvasHeight/20;
-const SEPARATION = 5;
+const SEPARATION = 1;
 
 const X = canvasWidth/2	
 const Y = canvasHeight/6; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
@@ -347,27 +303,23 @@ const ROW_COUNT = 13;
 const COL_COUNT = 13; 
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH;
-const RAISE_RADIUS = 7;
+const RAISE_RADIUS = 5;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
 grid.setActiveRandomEdgeCube();
 
 
-
-let test = [1, 2, 3, 4]
-
-let count = 0;
-
+// let count = 0;
 function draw_one_frame() {
 	grid.draw([0, 255, 255], [255, 0, 0]);
 	grid.propagateActiveCubes();
 
-	if (count < 5) {
-		if (Math.random() > 0.95) {
-			grid.setActiveRandomEdgeCube();
-			count++;
-		}
-	}
+	// if (count < 5) {
+	// 	if (Math.random() > 0.95) {
+	// 		grid.setActiveRandomEdgeCube();
+	// 		count++;
+	// 	}
+	// }
 	
 }
