@@ -186,29 +186,6 @@ class CubeGrid {
 		}
 	}
 
-	getAdjacentCubes(activeCube) {
-		let adjCubes = []; 
-		for (let col=-this.raiseRadius; col<=this.raiseRadius; col++) {
-			for (let row=-this.raiseRadius; row<=this.raiseRadius; row++) {
-
-				let checkRow = activeCube.row + row;
-				let checkCol = activeCube.col + col;
-				// Checks if this particular cube is in bounds, ignoring the active
-				if (
-					checkRow >= 0 && checkRow < this.cubes[0].length &&
-					checkCol >= 0 && checkCol < this.cubes.length 
-				) { 
-					let cube = this.cubes[checkCol][checkRow];
-					if (!cube.active && this._dist(cube, activeCube) <= this.raiseRadius
-					) { 
-						adjCubes.push(cube); 
-					}
-				}
-			}
-		}
-		return adjCubes;
-	}
-
 	propagateActiveCubes() {
 		let activeCubes = this.getAllActive();
 
