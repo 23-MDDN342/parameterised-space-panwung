@@ -1,5 +1,5 @@
 class OrthoCube {
-	constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, propagationDir=undefined, active=false) {
+	constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, propagationVector=undefined, active=false) {
 		this.points = [[
 			xCenter,  // Ax
 			yCenter	  // Ay
@@ -10,12 +10,13 @@ class OrthoCube {
 		this.viewAngle = viewAngleDeg * Math.PI / 180; // Conver to Rad
 		this.edgeLength = edgeLength;
 
-		this.propagationDir = propagationDir; // The direction in which the cube moves
+		this.propagationVector = propagationVector; // The direction in which the cube moves
 
 		this.active = active;
 
 		this.raiseHeight = 0; // How high to raise the cube above nornmal level
-		this.isAffected = false;
+
+		this.influenceSources = [];
 
 		this._initPoints();
 	}
@@ -155,19 +156,19 @@ class CubeGrid {
 					!(row === maxRow - 1 && col === maxCol - 1)
 				) {
 					if (row === 0) {
-						newCube.propagationDir = [+SPEED, 0];
+						newCube.propagationVector = [+SPEED, 0];
 						this.edgeCubes.push(newCube); 
 					}
 					else if (row === maxRow - 1) {
-						newCube.propagationDir = [-SPEED, 0];
+						newCube.propagationVector = [-SPEED, 0];
 						this.edgeCubes.push(newCube);
 					}
 					else if (col === 0) {
-						newCube.propagationDir = [0, +SPEED]
+						newCube.propagationVector = [0, +SPEED]
 						this.edgeCubes.push(newCube);
 					}
 					else if (col === maxCol - 1) {
-						newCube.propagationDir = [0, -SPEED]
+						newCube.propagationVector = [0, -SPEED]
 						this.edgeCubes.push(newCube);
 					}
 				}
@@ -187,141 +188,6 @@ class CubeGrid {
 		}
 	}
 
-
-	_raiseAdjacentCubesNEW() {
-		let activeCubes = this.getAllActive();
-		let exclude = [];
-
-		
-		// let allAffectedCubes = [];
-
-		// for (let activeCube of activeCubes) {
-		// 	for (let affected of this.getAdjacentCubes(activeCube)) {
-		// 		// Does not include duplicates
-		// 		if (!allAffectedCubes.includes(affected)) allAffectedCubes.push(affected);
-		// 	}
-		// }
-
-
-		/**
-		 * whats happening is even though a cube is in range of one active,
-		 * it is not in range of another active
-		 * cubes should only be affected if they are in range of multiple cubes
-		 */
-
-		for (let col=0; col<this.cubes.length; col++) {
-			for (let row=0; row<this.cubes[0].length; row++) {
-				let cube = this.cubes[col][row];
-				let count = 0;
-				let newRaiseHeight = 0;
-				if (!cube.active && !exclude.includes(cube)) {
-					// Get the active cubes
-					for (let activeCube of activeCubes) {
-						let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
-						if (range <= this.raiseRadius) {
-							
-							newRaiseHeight += (this.raiseRadius - range + 1) * this.maxRaiseHeight / this.raiseRadius;
-							
-							count++;
-						}
-					}
-				}
-
-				if (count !== 0) {
-					cube.raiseHeight = newRaiseHeight/count;
-					exclude.push(cube);
-				}
-
-				
-				
-				
-				// console.log(cube.raiseHeight);
-			}
-		}
-
-		for (let activeCube of activeCubes) activeCube.raiseHeight = this.maxRaiseHeight;
-
-		
-		// for (let cube of adjCubes) {
-		// 	if (cube.isAffected) {
-		// 		let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
-		// 		cube.raiseHeight = (((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight)/2 ;
-		// 	}
-		// }
-
-
-
-
-
-
-
-		// console.log(activeCubes);
-		// console.log(allAffectedCubes);
-
-		// for (let cube of allAffectedCubes) {
-		// 	cube.raiseHeight = 20;
-		// }
-	}
-
-	propagateActiveCubes() {
-
-		// for (let col=0; col<this.cubes.length; col++) {
-			// for (let row=0; row<this.cubes[0].length; row++) {
-				// this.cubes[col][row].isAffected = false;
-				// this.cubes[col][row].raiseHeight = 0;
-				//if (!this.cubes[col][row].isAffected) 
-			// }
-		// }
-
-		let excludeFromSearch = [];
-
-		for (let col=0; col<this.cubes.length; col++) {
-			for (let row=0; row<this.cubes[0].length; row++) {
-
-				// Grabs a cube that might be active
-				let activeCube = this.cubes[col][row]; 
-
-				// Checks if the cube is active and if it has not been excluded from search
-				if (activeCube.active && !excludeFromSearch.includes(activeCube)) {
-
-					// Calculates the next cube based on the active cubes propagation
-					let nextRow = activeCube.row + activeCube.propagationDir[0];
-					let nextCol = activeCube.col + activeCube.propagationDir[1];
-
-					// Checks if that propagation is in range of the main array
-					if (
-						nextRow >= 0 && nextRow < this.cubes[0].length &&
-						nextCol >= 0 && nextCol < this.cubes.length
-					) {
-						// Grabs the cube to propagate to
-						let nextCube = this.cubes[nextCol][nextRow];
-						
-						// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
-						// This has the unintended, but interesting, side effect of the active cube "rebounding"
-						nextCube.active = true;
-						nextCube.isAffected = true;
-						if (!this.edgeCubes.includes(nextCube)) nextCube.propagationDir = activeCube.propagationDir;
-
-						// Sets the raise height of the next cube to max and changes the active height
-						activeCube.raiseHeight = (((this.raiseRadius - 1) * this.maxRaiseHeight / this.raiseRadius) + nextCube.raiseHeight) / 2 ;
-						nextCube.raiseHeight = this.maxRaiseHeight;
-
-						// Exclude it from search
-						excludeFromSearch.push(nextCube);
-
-						// Radiually influence the raise height of adjacent cubes
-						this._raiseAdjacentCubes(nextCube);
-					}
-					
-					// Set the active cube to false and reset its propagation, unless it is an edge cube
-					activeCube.active = false;
-					activeCube.isAffected = true;
-					if (!this.edgeCubes.includes(activeCube)) activeCube.propagationDir = undefined;
-				}
-			}
-		}
-	}
-
 	getAdjacentCubes(activeCube) {
 		let adjCubes = []; 
 		for (let col=-this.raiseRadius; col<=this.raiseRadius; col++) {
@@ -336,10 +202,8 @@ class CubeGrid {
 					!(row === 0 && col === 0)
 				) { 
 					let cube = this.cubes[checkCol][checkRow];
-					if (!cube.active && Math.floor( 
-						Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) ) <= this.raiseRadius
+					if (!cube.active && this._dist(cube, activeCube) <= this.raiseRadius
 					) { 
-						cube.isAffected = true;
 						adjCubes.push(cube); 
 					}
 				}
@@ -348,15 +212,65 @@ class CubeGrid {
 		return adjCubes;
 	}
 
-	_raiseAdjacentCubes(activeCube) {
-		let adjCubes = this.getAdjacentCubes(activeCube);
+	propagateActiveCubes() {
+		let activeCubes = this.getAllActive();
 
-		for (let cube of adjCubes) {
-			if (cube.isAffected) {
-				let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
-				cube.raiseHeight = (((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight)/2 ;
+		for (let activeCube of activeCubes) {
+			// Calculates the next cube based on the active cubes propagation
+			let nextRow = activeCube.row + activeCube.propagationVector[0];
+			let nextCol = activeCube.col + activeCube.propagationVector[1];
+
+			// Checks if that propagation is in range of the main array
+			if (
+				nextRow >= 0 && nextRow < this.cubes[0].length &&
+				nextCol >= 0 && nextCol < this.cubes.length
+			) {
+				let nextCube = this.cubes[nextCol][nextRow];
+
+				// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
+				// This has the unintended, but interesting, side effect of the active cube "rebounding"
+				nextCube.active = true;
+				if (!this.edgeCubes.includes(nextCube)) nextCube.propagationVector = activeCube.propagationVector;
+			}
+
+			// Set the active cube to false and reset its propagation, unless it is an edge cube
+			activeCube.active = false;
+			if (!this.edgeCubes.includes(activeCube)) activeCube.propagationVector = undefined;
+		}
+
+		this._raiseAdjacentCubes();
+	}
+
+	_dist(cube, activeCube) {
+		return Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 );
+	}
+
+	_raiseAdjacentCubes() {
+		let activeCubes = this.getAllActive();
+
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let count = 0;
+				let newRaiseHeight = 0;
+				let cube = this.cubes[col][row];
+				if (!cube.active) {
+					for (let activeCube of activeCubes) {
+						let range = this._dist(cube, activeCube);
+						
+						if (range <= this.raiseRadius) {
+							newRaiseHeight += ( this.raiseRadius - range ) * this.maxRaiseHeight / this.raiseRadius;
+							count++;
+							cube.influenceSources.push([activeCube.row, activeCube.col]);
+						}
+					}
+					cube.raiseHeight = (count > 0) ? newRaiseHeight : 0;
+				}
 			}
 		}
+
+		for (let activeCube of activeCubes) {
+			activeCube.raiseHeight = this.maxRaiseHeight;
+		} 
 	}
 
 	setActiveRandomEdgeCube() {
@@ -390,23 +304,26 @@ const ROW_COUNT = 13;
 const COL_COUNT = 13; 
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
-const RAISE_RADIUS = 7;
+const RAISE_RADIUS = 4;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
 grid.setActiveRandomEdgeCube();
-grid.setActiveRandomEdgeCube();
-grid.setActiveRandomEdgeCube();
+// grid.setActiveRandomEdgeCube();
+// grid.setActiveRandomEdgeCube();
 
+// grid.cubes[3][0].active = true;
+// grid.cubes[9][0].active = true;
 
 let count = 1;
-const LIMIT = 1;
+const LIMIT = 2;
 const CHANCE = 0.1;
 function draw_one_frame() {
-	grid._raiseAdjacentCubesNEW()
+
 	grid.draw([0, 255, 255], [255, 0, 0]);
-	noLoop();
-	// grid.propagateActiveCubes();
+
+	grid.propagateActiveCubes();
+
 
 	if (count < LIMIT) {
 		if (Math.random() > 1 - CHANCE) {
