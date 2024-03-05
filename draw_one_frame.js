@@ -15,6 +15,7 @@ class OrthoCube {
 		this.active = active;
 
 		this.raiseHeight = 0; // How high to raise the cube above nornmal level
+		this.isAffected = false;
 
 		this._initPoints();
 	}
@@ -192,6 +193,13 @@ class CubeGrid {
 
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
+				this.cubes[col][row].isAffected = false;
+				this.cubes[col][row].raiseHeight = 0;
+			}
+		}
+
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
 
 				// Grabs a cube that might be active
 				let activeCube = this.cubes[col][row]; 
@@ -216,8 +224,8 @@ class CubeGrid {
 						nextCube.active = true;
 						if (!this.edgeCubes.includes(nextCube)) nextCube.propagationDir = activeCube.propagationDir;
 
-						// Sets the raise height of the next cube to max and resets the active height
-						activeCube.raiseHeight = 0;
+						// Sets the raise height of the next cube to max and changes the active height
+						activeCube.raiseHeight = ((this.raiseRadius - 1) * this.maxRaiseHeight / this.raiseRadius)  ;
 						nextCube.raiseHeight = this.maxRaiseHeight;
 
 						// Exclude it from search
@@ -249,9 +257,12 @@ class CubeGrid {
 					!(row === 0 && col === 0)
 				) { 
 					let cube = this.cubes[checkCol][checkRow];
-					if (Math.floor( 
+					if (!cube.active && Math.floor( 
 						Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) ) <= this.raiseRadius
-					) { adjCubes.push(cube); }
+					) { 
+						cube.isAffected = true;
+						adjCubes.push(cube); 
+					}
 				}
 			}
 		}
@@ -262,8 +273,10 @@ class CubeGrid {
 		let adjCubes = this.getAdjacentCubes(activeCube);
 
 		for (let cube of adjCubes) {
-			let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
-			cube.raiseHeight = ( ((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight ) / 2;
+			if (cube.isAffected) {
+				let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
+				cube.raiseHeight = ((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight ;
+			}
 		}
 	}
 
@@ -295,16 +308,16 @@ const Y = canvasHeight/6; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
 const ROW_COUNT = 13; 
 const COL_COUNT = 13; 
 
-const MAX_RAISE_HEIGHT = EDGE_LENGTH;
-const RAISE_RADIUS = 9;
+const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
+const RAISE_RADIUS = 5;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
 grid.setActiveRandomEdgeCube();
 
 
-let count = 0;
-const LIMIT = 10;
+let count = 1;
+const LIMIT = 5;
 const CHANCE = 0.05
 function draw_one_frame() {
 	grid.draw([0, 255, 255], [255, 0, 0]);
