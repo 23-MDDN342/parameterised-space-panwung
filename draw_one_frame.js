@@ -196,8 +196,7 @@ class CubeGrid {
 				// Checks if this particular cube is in bounds, ignoring the active
 				if (
 					checkRow >= 0 && checkRow < this.cubes[0].length &&
-					checkCol >= 0 && checkCol < this.cubes.length &&
-					!(row === 0 && col === 0)
+					checkCol >= 0 && checkCol < this.cubes.length 
 				) { 
 					let cube = this.cubes[checkCol][checkRow];
 					if (!cube.active && this._dist(cube, activeCube) <= this.raiseRadius
@@ -251,23 +250,21 @@ class CubeGrid {
 				let count = 0;
 				let newRaiseHeight = 0;
 				let cube = this.cubes[col][row];
-				if (!cube.active) {
-					for (let activeCube of activeCubes) {
-						let range = this._dist(cube, activeCube);
-						
-						if (range <= this.raiseRadius) {
-							newRaiseHeight += ( this.raiseRadius - range ) * this.maxRaiseHeight / this.raiseRadius;
-							count++;
-						}
+
+				for (let activeCube of activeCubes) {
+					let range = this._dist(cube, activeCube);
+					
+					if (range <= this.raiseRadius) {
+						newRaiseHeight += ( this.raiseRadius - range ) * this.maxRaiseHeight / this.raiseRadius;
+						count++;
 					}
-					cube.raiseHeight = (count > 0) ? newRaiseHeight : 0;
 				}
+				cube.raiseHeight = (count > 0) ? newRaiseHeight : 0;
+
 			}
 		}
 
-		for (let activeCube of activeCubes) {
-			activeCube.raiseHeight = this.maxRaiseHeight;
-		} 
+
 	}
 
 	setActiveRandomEdgeCube() {
