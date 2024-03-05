@@ -186,7 +186,7 @@ class CubeGrid {
 		}
 	}
 
-	propagateActiveCubes() {
+	propagateActiveCubes(rebound=true) {
 		let activeCubes = this.getAllActive();
 
 		for (let activeCube of activeCubes) {
@@ -202,9 +202,16 @@ class CubeGrid {
 				let nextCube = this.cubes[nextCol][nextRow];
 
 				// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
-				// This has the unintended, but interesting, side effect of the active cube "rebounding"
-				nextCube.active = true;
-				if (!this.edgeCubes.includes(nextCube)) nextCube.propagationVector = activeCube.propagationVector;
+				if (rebound) {
+					nextCube.active = true;
+					if (!this.edgeCubes.includes(nextCube)) nextCube.propagationVector = activeCube.propagationVector;
+				}
+				else {
+					if (!this.edgeCubes.includes(nextCube)) {
+						nextCube.active = true;
+						nextCube.propagationVector = activeCube.propagationVector;
+					}
+				}
 			}
 
 			// Set the active cube to false and reset its propagation, unless it is an edge cube
@@ -262,30 +269,30 @@ class CubeGrid {
 
 const ANGLE = 120;
 const EDGE_LENGTH = canvasHeight/20;
-const SEPARATION = 1;
+const SEPARATION = 3;
 
 const X = canvasWidth/2	
-const Y = canvasHeight/6; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
+const Y = -canvasHeight/2; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
 
 // 13x13 is perfect for rebounding, 24x24 is perfect for linear
-const ROW_COUNT = 13; 
-const COL_COUNT = 13; 
+const ROW_COUNT = 42; 
+const COL_COUNT = 42; 
 
-const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1;
-const RAISE_RADIUS = 6;
+const MAX_RAISE_HEIGHT = EDGE_LENGTH * 2;
+const RAISE_RADIUS = 21;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
 grid.setActiveRandomEdgeCube();
 
 let count = 1;
-const LIMIT = 5;
-const CHANCE = 0.1;
+const LIMIT = 100;
+const CHANCE = 0.05;
 function draw_one_frame() {
 
 	grid.draw([0, 255, 255], [255, 0, 0]);
 
-	grid.propagateActiveCubes();
+	grid.propagateActiveCubes(false);
 
 	if (count < LIMIT) {
 		if (Math.random() > 1 - CHANCE) {
