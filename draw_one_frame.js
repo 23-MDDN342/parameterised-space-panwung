@@ -215,6 +215,17 @@ class CubeGrid {
 		this._raiseAdjacentCubes();
 	}
 
+	getAllActive() {
+		let activeCubes = [];
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let activeCube = this.cubes[col][row];
+				if (activeCube.active) activeCubes.push(activeCube);
+			}
+		}
+		return activeCubes;
+	}
+
 	_dist(cube, activeCube) {
 		return Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 );
 	}
@@ -246,17 +257,6 @@ class CubeGrid {
 		console.log(edgeCube.gridPos);
 		edgeCube.active = true;
 	}
-	
-	getAllActive() {
-		let activeCubes = [];
-		for (let col=0; col<this.cubes.length; col++) {
-			for (let row=0; row<this.cubes[0].length; row++) {
-				let activeCube = this.cubes[col][row];
-				if (activeCube.active) activeCubes.push(activeCube);
-			}
-		}
-		return activeCubes;
-	}
 }
 
 
@@ -277,11 +277,6 @@ const RAISE_RADIUS = 6;
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
 grid.setActiveRandomEdgeCube();
-// grid.setActiveRandomEdgeCube();
-// grid.setActiveRandomEdgeCube();
-
-// grid.cubes[3][0].active = true;
-// grid.cubes[9][0].active = true;
 
 let count = 1;
 const LIMIT = 5;
