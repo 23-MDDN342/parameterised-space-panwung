@@ -14,7 +14,7 @@ class OrthoCube {
 
 		this.active = active;
 
-		this.raiseHeight = 0.1; // How high to raise the cube above nornmal level
+		this.raiseHeight = 0; // How high to raise the cube above nornmal level
 
 		this._initPoints();
 	}
@@ -102,11 +102,13 @@ class OrthoCube {
 	}
 
 	_colorBrightness(cubeColor, percentage) {
-		return [
-			cubeColor[0] * percentage, 
-			cubeColor[1] * percentage, 
-			cubeColor[2] * percentage
-		]
+		if (typeof cubeColor === "number") return cubeColor * percentage;
+		
+		let newCubeCol = [];
+		for (let i=0; i<cubeColor.length; i++) {
+			newCubeCol[i] = cubeColor[i] * percentage;
+		}
+		return newCubeCol;
 	}
 	get x() { return this.points[0][0]; }
 	get y() { return this.points[0][1]; }
@@ -233,6 +235,12 @@ class CubeGrid {
 		return activeCubes;
 	}
 
+	setActiveRandomEdgeCube() {
+		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
+		// console.log(edgeCube.gridPos);
+		edgeCube.active = true;
+	}
+
 	_dist(cube, activeCube) {
 		return Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 );
 	}
@@ -255,43 +263,42 @@ class CubeGrid {
 						count++;
 					}
 				}
-				cube.raiseHeight = (count > 0) ? newRaiseHeight : cube.raiseHeight * DEGENERATION + 0.1;
+				cube.raiseHeight = (count > 0) ? newRaiseHeight : cube.raiseHeight * DEGENERATION;
 			}
 		}
 	}
-
-	setActiveRandomEdgeCube() {
-		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
-		console.log(edgeCube.gridPos);
-		edgeCube.active = true;
-	}
 }
-
 
 const ANGLE = 120;
 const EDGE_LENGTH = canvasHeight/16;
 const SEPARATION = 3;
 
 const X = canvasWidth/2	
-const Y = -canvasHeight/2.2; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
+const Y = -canvasHeight; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
 
 // 13x13 is perfect for rebounding, 24x24 is perfect for linear
-const ROW_COUNT = 30; 
-const COL_COUNT = 30; 
+const ROW_COUNT = 48; 
+const COL_COUNT = 48; 
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH * 2;
-const RAISE_RADIUS = 22;
+const RAISE_RADIUS = 11;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
+const BGC = [0, 0, 0];
+const PSV_COL = 50;
+const ACV_COL = [255, 180, 180];
+
 
 const REBOUND = false;
 
 let count = 0;
 const LIMIT = 1;
 const CHANCE = 0.05;
-function draw_one_frame() {
 
-	grid.draw([0, 255, 255], [255, 0, 0]);
+function draw_one_frame() {
+	background(BGC);
+
+	grid.draw(PSV_COL, ACV_COL);
 
 	grid.propagateActiveCubes(REBOUND);
 
