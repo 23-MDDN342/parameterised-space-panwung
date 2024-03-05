@@ -27,7 +27,7 @@ class OrthoCube {
 		// Draws top rhombus
 		fill(this._colorBrightness(cubeCol, 1));
 		beginShape();
-		vertex(0, - this.raiseHeight);						  		     // A
+		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
 		vertex(this.points[6][0], this.points[6][1] - this.raiseHeight); // G
 		vertex(this.points[2][0], this.points[2][1] - this.raiseHeight); // C
@@ -36,7 +36,7 @@ class OrthoCube {
 		// Draws left rhombus
 		fill(this._colorBrightness(cubeCol, 2/3));
 		beginShape();
-		vertex(0, - this.raiseHeight);						 			 // A
+		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
 		vertex(this.points[3][0], this.points[3][1] - this.raiseHeight); // D
 		vertex(this.points[4][0], this.points[4][1] - this.raiseHeight); // E
@@ -45,7 +45,7 @@ class OrthoCube {
 		// Draws right rhombus
 		fill(this._colorBrightness(cubeCol, 1/3));
 		beginShape();
-		vertex(0, - this.raiseHeight);								     // A
+		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[2][0], this.points[2][1] - this.raiseHeight); // C
 		vertex(this.points[5][0], this.points[5][1] - this.raiseHeight); // F
 		vertex(this.points[4][0], this.points[4][1] - this.raiseHeight); // E
