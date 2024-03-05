@@ -225,7 +225,7 @@ class CubeGrid {
 						if (!this.edgeCubes.includes(nextCube)) nextCube.propagationDir = activeCube.propagationDir;
 
 						// Sets the raise height of the next cube to max and changes the active height
-						activeCube.raiseHeight = ((this.raiseRadius - 1) * this.maxRaiseHeight / this.raiseRadius)  ;
+						activeCube.raiseHeight = (((this.raiseRadius - 1) * this.maxRaiseHeight / this.raiseRadius) + nextCube.raiseHeight) / 2 ;
 						nextCube.raiseHeight = this.maxRaiseHeight;
 
 						// Exclude it from search
@@ -275,7 +275,7 @@ class CubeGrid {
 		for (let cube of adjCubes) {
 			if (cube.isAffected) {
 				let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
-				cube.raiseHeight = ((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight ;
+				cube.raiseHeight = (((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight)/2 ;
 			}
 		}
 	}
@@ -317,8 +317,8 @@ grid.setActiveRandomEdgeCube();
 
 
 let count = 1;
-const LIMIT = 5;
-const CHANCE = 0.05
+const LIMIT = 15;
+const CHANCE = 0.1;
 function draw_one_frame() {
 	grid.draw([0, 255, 255], [255, 0, 0]);
 	grid.propagateActiveCubes();
