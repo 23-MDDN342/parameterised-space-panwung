@@ -300,7 +300,7 @@ const Y = canvasHeight/6; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
 const ROW_COUNT = 13; 
 const COL_COUNT = 13; 
 
-const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
+const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1;
 const RAISE_RADIUS = 6;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
