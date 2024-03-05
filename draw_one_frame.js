@@ -14,7 +14,7 @@ class OrthoCube {
 
 		this.active = active;
 
-		this.raiseHeight = 0; // How high to raise the cube above nornmal level
+		this.raiseHeight = 0.1; // How high to raise the cube above nornmal level
 
 		this._initPoints();
 	}
@@ -238,6 +238,7 @@ class CubeGrid {
 	}
 
 	_raiseAdjacentCubes() {
+		const DEGENERATION = 0.85;
 		let activeCubes = this.getAllActive();
 
 		for (let col=0; col<this.cubes.length; col++) {
@@ -254,7 +255,7 @@ class CubeGrid {
 						count++;
 					}
 				}
-				cube.raiseHeight = (count > 0) ? newRaiseHeight : 0;
+				cube.raiseHeight = (count > 0) ? newRaiseHeight : cube.raiseHeight * DEGENERATION + 0.1;
 			}
 		}
 	}
@@ -268,36 +269,47 @@ class CubeGrid {
 
 
 const ANGLE = 120;
-const EDGE_LENGTH = canvasHeight/20;
+const EDGE_LENGTH = canvasHeight/16;
 const SEPARATION = 3;
 
 const X = canvasWidth/2	
-const Y = -canvasHeight/2; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
+const Y = -canvasHeight/2.2; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
 
 // 13x13 is perfect for rebounding, 24x24 is perfect for linear
-const ROW_COUNT = 42; 
-const COL_COUNT = 42; 
+const ROW_COUNT = 30; 
+const COL_COUNT = 30; 
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH * 2;
-const RAISE_RADIUS = 21;
+const RAISE_RADIUS = 22;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
-grid.setActiveRandomEdgeCube();
+const REBOUND = false;
 
-let count = 1;
-const LIMIT = 100;
+let count = 0;
+const LIMIT = 1;
 const CHANCE = 0.05;
 function draw_one_frame() {
 
 	grid.draw([0, 255, 255], [255, 0, 0]);
 
-	grid.propagateActiveCubes(false);
+	grid.propagateActiveCubes(REBOUND);
 
-	if (count < LIMIT) {
-		if (Math.random() > 1 - CHANCE) {
-			grid.setActiveRandomEdgeCube();
-			count++;
+
+	if (!REBOUND) {
+		if (grid.getAllActive().length < 1) {
+			if (Math.random() > 1 - CHANCE) {
+				grid.setActiveRandomEdgeCube();
+			}
 		}
 	}
+	else {
+		if (count < LIMIT) {
+			if (Math.random() > 1 - CHANCE) {
+				grid.setActiveRandomEdgeCube();
+				count++;
+			}
+		}
+	}
+
 }
