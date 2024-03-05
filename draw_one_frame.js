@@ -109,7 +109,6 @@ class OrthoCube {
 			cubeColor[2] * percentage
 		]
 	}
-
 	get x() { return this.points[0][0]; }
 	get y() { return this.points[0][1]; }
 
@@ -188,15 +187,93 @@ class CubeGrid {
 		}
 	}
 
-	propagateActiveCubes() {
-		let excludeFromSearch = [];
+
+	_raiseAdjacentCubesNEW() {
+		let activeCubes = this.getAllActive();
+		let exclude = [];
+
+		
+		// let allAffectedCubes = [];
+
+		// for (let activeCube of activeCubes) {
+		// 	for (let affected of this.getAdjacentCubes(activeCube)) {
+		// 		// Does not include duplicates
+		// 		if (!allAffectedCubes.includes(affected)) allAffectedCubes.push(affected);
+		// 	}
+		// }
+
+
+		/**
+		 * whats happening is even though a cube is in range of one active,
+		 * it is not in range of another active
+		 * cubes should only be affected if they are in range of multiple cubes
+		 */
 
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
-				this.cubes[col][row].isAffected = false;
-				this.cubes[col][row].raiseHeight = 0;
+				let cube = this.cubes[col][row];
+				let count = 0;
+				let newRaiseHeight = 0;
+				if (!cube.active && !exclude.includes(cube)) {
+					// Get the active cubes
+					for (let activeCube of activeCubes) {
+						let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
+						if (range <= this.raiseRadius) {
+							
+							newRaiseHeight += (this.raiseRadius - range + 1) * this.maxRaiseHeight / this.raiseRadius;
+							
+							count++;
+						}
+					}
+				}
+
+				if (count !== 0) {
+					cube.raiseHeight = newRaiseHeight/count;
+					exclude.push(cube);
+				}
+
+				
+				
+				
+				// console.log(cube.raiseHeight);
 			}
 		}
+
+		for (let activeCube of activeCubes) activeCube.raiseHeight = this.maxRaiseHeight;
+
+		
+		// for (let cube of adjCubes) {
+		// 	if (cube.isAffected) {
+		// 		let range = Math.floor( Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 ) );
+		// 		cube.raiseHeight = (((this.raiseRadius - range) * this.maxRaiseHeight / this.raiseRadius) + cube.raiseHeight)/2 ;
+		// 	}
+		// }
+
+
+
+
+
+
+
+		// console.log(activeCubes);
+		// console.log(allAffectedCubes);
+
+		// for (let cube of allAffectedCubes) {
+		// 	cube.raiseHeight = 20;
+		// }
+	}
+
+	propagateActiveCubes() {
+
+		// for (let col=0; col<this.cubes.length; col++) {
+			// for (let row=0; row<this.cubes[0].length; row++) {
+				// this.cubes[col][row].isAffected = false;
+				// this.cubes[col][row].raiseHeight = 0;
+				//if (!this.cubes[col][row].isAffected) 
+			// }
+		// }
+
+		let excludeFromSearch = [];
 
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
@@ -222,6 +299,7 @@ class CubeGrid {
 						// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
 						// This has the unintended, but interesting, side effect of the active cube "rebounding"
 						nextCube.active = true;
+						nextCube.isAffected = true;
 						if (!this.edgeCubes.includes(nextCube)) nextCube.propagationDir = activeCube.propagationDir;
 
 						// Sets the raise height of the next cube to max and changes the active height
@@ -237,6 +315,7 @@ class CubeGrid {
 					
 					// Set the active cube to false and reset its propagation, unless it is an edge cube
 					activeCube.active = false;
+					activeCube.isAffected = true;
 					if (!this.edgeCubes.includes(activeCube)) activeCube.propagationDir = undefined;
 				}
 			}
@@ -287,12 +366,14 @@ class CubeGrid {
 	}
 	
 	getAllActive() {
+		let activeCubes = [];
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				let activeCube = this.cubes[col][row];
-				if (activeCube.active) console.log("POS: (" + activeCube.gridPos + "), DIR: (" + activeCube.propagationDir + ")");
+				if (activeCube.active) activeCubes.push(activeCube);
 			}
 		}
+		return activeCubes;
 	}
 }
 
@@ -309,19 +390,23 @@ const ROW_COUNT = 13;
 const COL_COUNT = 13; 
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
-const RAISE_RADIUS = 5;
+const RAISE_RADIUS = 7;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
 grid.setActiveRandomEdgeCube();
+grid.setActiveRandomEdgeCube();
+grid.setActiveRandomEdgeCube();
 
 
 let count = 1;
-const LIMIT = 15;
+const LIMIT = 1;
 const CHANCE = 0.1;
 function draw_one_frame() {
+	grid._raiseAdjacentCubesNEW()
 	grid.draw([0, 255, 255], [255, 0, 0]);
-	grid.propagateActiveCubes();
+	noLoop();
+	// grid.propagateActiveCubes();
 
 	if (count < LIMIT) {
 		if (Math.random() > 1 - CHANCE) {
