@@ -94,8 +94,8 @@ class OrthoCube {
 		];
 
 		let G = [
-			+ 0,  //Gx
-			- 2 * this.edgeLength * Math.cos( this.viewAngle / 2 )
+			+ 0,                                                    //Gx
+			- 2 * this.edgeLength * Math.cos( this.viewAngle / 2 )  //Gy
 		];
 
 		this.points.push(B, C, D, E, F, G);
