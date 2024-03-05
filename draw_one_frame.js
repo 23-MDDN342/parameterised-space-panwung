@@ -16,8 +16,6 @@ class OrthoCube {
 
 		this.raiseHeight = 0; // How high to raise the cube above nornmal level
 
-		this.influenceSources = [];
-
 		this._initPoints();
 	}
   
@@ -260,7 +258,6 @@ class CubeGrid {
 						if (range <= this.raiseRadius) {
 							newRaiseHeight += ( this.raiseRadius - range ) * this.maxRaiseHeight / this.raiseRadius;
 							count++;
-							cube.influenceSources.push([activeCube.row, activeCube.col]);
 						}
 					}
 					cube.raiseHeight = (count > 0) ? newRaiseHeight : 0;
@@ -304,7 +301,7 @@ const ROW_COUNT = 13;
 const COL_COUNT = 13; 
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
-const RAISE_RADIUS = 4;
+const RAISE_RADIUS = 6;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
 
@@ -316,14 +313,13 @@ grid.setActiveRandomEdgeCube();
 // grid.cubes[9][0].active = true;
 
 let count = 1;
-const LIMIT = 2;
+const LIMIT = 5;
 const CHANCE = 0.1;
 function draw_one_frame() {
 
 	grid.draw([0, 255, 255], [255, 0, 0]);
 
 	grid.propagateActiveCubes();
-
 
 	if (count < LIMIT) {
 		if (Math.random() > 1 - CHANCE) {
