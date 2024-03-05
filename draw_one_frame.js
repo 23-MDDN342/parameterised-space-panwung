@@ -260,11 +260,8 @@ class CubeGrid {
 					}
 				}
 				cube.raiseHeight = (count > 0) ? newRaiseHeight : 0;
-
 			}
 		}
-
-
 	}
 
 	setActiveRandomEdgeCube() {
@@ -324,5 +321,4 @@ function draw_one_frame() {
 			count++;
 		}
 	}
-	
 }
