@@ -19,13 +19,15 @@ class OrthoCube {
 		this._initPoints();
 	}
   
-	draw(cubeCol) {
+	draw(coldCol, hotCol, maxRaiseHeight, dimensional=false) {
 		push();
 		noStroke();
 		translate(this.points[0][0], this.points[0][1]);
 
+		fill(this._heatMapColor(coldCol, hotCol, maxRaiseHeight));
+
 		// Draws top rhombus
-		fill(this._colorBrightness(cubeCol, 1));
+		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1), this._colorBrightness(hotCol, 1), maxRaiseHeight));
 		beginShape();
 		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -34,7 +36,7 @@ class OrthoCube {
 		endShape(CLOSE);
 
 		// Draws left rhombus
-		fill(this._colorBrightness(cubeCol, 2/3));
+		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 2/3), this._colorBrightness(hotCol, 2/3), maxRaiseHeight));
 		beginShape();
 		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -43,7 +45,7 @@ class OrthoCube {
 		endShape(CLOSE);
 
 		// Draws right rhombus
-		fill(this._colorBrightness(cubeCol, 1/3));
+		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1/3), this._colorBrightness(hotCol, 1/3), maxRaiseHeight));
 		beginShape();
 		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[2][0], this.points[2][1] - this.raiseHeight); // C
@@ -53,7 +55,26 @@ class OrthoCube {
 
 		pop();
 	}
-	
+
+	_heatMapColor(col1, col2, maxRaiseHeight) {
+		push();
+		colorMode(RGB);
+		let heatCol = lerpColor(color(col1), color(col2), map(this.raiseHeight, 0, 1.25 * maxRaiseHeight, 0, 1));
+		pop();
+
+		return heatCol;
+	}
+
+	_colorBrightness(cubeColor, percentage) {
+		if (typeof cubeColor === "number") return cubeColor * percentage;
+		
+		let newCubeCol = [];
+		for (let i=0; i<cubeColor.length; i++) {
+			newCubeCol[i] = cubeColor[i] * percentage;
+		}
+		return newCubeCol;
+	}
+
 	/*  
 	 * Calculates the points on the cube
 	 * 
@@ -101,15 +122,6 @@ class OrthoCube {
 		this.points.push(B, C, D, E, F, G);
 	}
 
-	_colorBrightness(cubeColor, percentage) {
-		if (typeof cubeColor === "number") return cubeColor * percentage;
-		
-		let newCubeCol = [];
-		for (let i=0; i<cubeColor.length; i++) {
-			newCubeCol[i] = cubeColor[i] * percentage;
-		}
-		return newCubeCol;
-	}
 	get x() { return this.points[0][0]; }
 	get y() { return this.points[0][1]; }
 
@@ -118,12 +130,13 @@ class OrthoCube {
 }
 
 class CubeGrid {
-	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, maxRaiseHeight, raiseRadius) {
+	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, maxRaiseHeight, raiseRadius, dimensional) {
 		const SPEED = 1;
 
 		// x and y values for the very top cube
 		this.x = x;
 		this.y = y;
+		this.dimensional = dimensional;
 
 		// Maximum raise height for active cubes
 		this.maxRaiseHeight = maxRaiseHeight;
@@ -183,7 +196,7 @@ class CubeGrid {
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				let cube = this.cubes[col][row];
-				cube.draw((cube.active) ? activeCol : passiveCol);
+				cube.draw(passiveCol, activeCol, this.maxRaiseHeight, this.dimensional);
 			}
 		}
 	}
@@ -269,6 +282,62 @@ class CubeGrid {
 	}
 }
 
+
+const ANGLE = 120;
+const EDGE_LENGTH = canvasHeight/20; // canvasHeight/20 for 13x13, canvasHeight/30 for 24x24
+const SEPARATION = 3;
+
+
+const X = canvasWidth/2	
+const Y = canvasHeight/6; // canvasHeight/6 for 13x13, canvasHeight/18 for 24x24
+
+// 13x13 is perfect for rebounding, 24x24 is perfect for linear
+const ROW_COUNT = 13; 
+const COL_COUNT = 13; 
+
+const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
+const RAISE_RADIUS = 6;
+const DIMENSIONAL = false;
+
+const BGC = [0, 0, 0];
+const PSV_COL = [0, 0, 255];
+const ACV_COL = [255, 0, 0];
+
+
+const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS, DIMENSIONAL);
+
+
+
+const REBOUND = true;
+
+let count = 0;
+const LIMIT = 3;
+const CHANCE = 0.05;
+
+grid.setActiveRandomEdgeCube();
+grid.setActiveRandomEdgeCube();
+grid.setActiveRandomEdgeCube();
+grid.setActiveRandomEdgeCube();
+
+function draw_one_frame() {
+	background(BGC);
+
+	grid.draw(PSV_COL, ACV_COL);
+
+	grid.propagateActiveCubes(REBOUND);
+
+
+	if (!REBOUND) {
+		if (grid.getAllActive().length < 1) {
+			if (Math.random() > 1 - CHANCE) {
+				grid.setActiveRandomEdgeCube();
+			}
+		}
+	}
+}
+
+
+/* LEGACY
 const ANGLE = 120;
 const EDGE_LENGTH = canvasHeight/16;
 const SEPARATION = 3;
@@ -318,5 +387,4 @@ function draw_one_frame() {
 			}
 		}
 	}
-
-}
+} */
