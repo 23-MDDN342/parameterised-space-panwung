@@ -1,21 +1,23 @@
 class OrthoCube {
 	constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, propagationVector=undefined, active=false) {
+		// Positioning
 		this.points = [[
 			xCenter,  // Ax
 			yCenter	  // Ay
 		]];
 
-		this.gridPos = gridPos;
+		this.gridPos = gridPos; // Position on grid
+		this.propagationVector = propagationVector; // The direction in which the cube moves
 
+		// Rendering
 		this.viewAngle = viewAngleDeg * Math.PI / 180; // Conver to Rad
 		this.edgeLength = edgeLength;
 
-		this.propagationVector = propagationVector; // The direction in which the cube moves
+		// Status
+		this.active = active; // Decides whether the cube is "moving" or not
+		this.raiseHeight = 0; // Raise height of the cube
 
-		this.active = active;
-
-		this.raiseHeight = 0; // How high to raise the cube above nornmal level
-
+		// Building 
 		this._initPoints();
 	}
 
@@ -131,41 +133,40 @@ class OrthoCube {
 
 class CubeGrid {
 	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, maxRaiseHeight, raiseRadius, dimensional, coldCol, warmCol) {
-		const SPEED = 1;
+		
+		// Positioning
+		this.x = x; // x coord of top cube
+		this.y = y; // y coord of top cube
 
-		// x and y values for the very top cube
-		this.x = x;
-		this.y = y;
-
+		const SPEED = 1; // Speed at which cubes "move"
+		this.maxRaiseHeight = maxRaiseHeight; // Maximum raise height for active cubes
+		this.raiseRadius = raiseRadius; // Radius of influence of active cubes 
+		
 		// Rendering
 		this.dimensional = dimensional;
 		this.coldCol = coldCol;
 		this.warmCol = warmCol;
 
-		// Maximum raise height for active cubes
-		this.maxRaiseHeight = maxRaiseHeight;
-
-		// Radius of influence of active cubes 
-		this.raiseRadius = raiseRadius;
-
-		let translationAngle = (Math.PI * (360 - 2 * viewAngleDeg)) / 720;
-		let translationX = (edgeLength + separation) * Math.cos(translationAngle);
-		let translationY = (edgeLength + separation) * Math.sin(translationAngle);
-
+		// Building
 		this.cubes = []; // 2D array of cubes
 		this.edgeCubes = []; // Array of edge cubes
+
+		let translationAngle = (Math.PI * (360 - 2 * viewAngleDeg)) / 720;
+		let translationX = (edgeLength + separation) * Math.cos(translationAngle); // How much to move horizontal when drawing next cube
+		let translationY = (edgeLength + separation) * Math.sin(translationAngle); // How much to move vertically when drawing next cube
 
 		for (let col=0; col<maxCol; col++) {
 			let rowArray = [];
 			for (let row=0; row<maxRow; row++) {
 
+				// x and y coords of new cube
 				let newX = x + row * translationX;
 				let newY = y + row * translationY;
 
 				let newCube = new OrthoCube(newX, newY, [row, col], viewAngleDeg, edgeLength)
 				rowArray.push(newCube);
 
-				// Exclude corner cubes
+				// Sets the edge cubes propagation and speed, excluding the corner cubes
 				if (
 					!(row === 0 && col === 0) && 
 					!(row === 0 && col === maxCol - 1) &&
@@ -191,6 +192,8 @@ class CubeGrid {
 				}
 			}
 			this.cubes.push(rowArray);
+
+			// Set x and y to the next column's x and y
 			x -= translationX;
 			y += translationY;
 		}
@@ -254,7 +257,6 @@ class CubeGrid {
 
 	setActiveRandomEdgeCube() {
 		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
-		// console.log(edgeCube.gridPos);
 		edgeCube.active = true;
 	}
 
@@ -263,29 +265,33 @@ class CubeGrid {
 	}
 
 	_raiseAdjacentCubes() {
-		const DEGENERATION = 0.85;
+		// Degeneration factor if a cube is not being influenced
+		const DEGENERATION = 0.85; 
+
 		let activeCubes = this.getAllActive();
 
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
-				let count = 0;
-				let newRaiseHeight = 0;
+				let count = 0; // How many active cubes have influenced this cube
+				let newRaiseHeight = 0; // New raise height of the cube
 				let cube = this.cubes[col][row];
 
 				for (let activeCube of activeCubes) {
-					let range = this._dist(cube, activeCube);
+					let range = this._dist(cube, activeCube); // Get the distance from this cube to some active cube
 					
+					// If the cube is within range, increase its new height based on its distance from that active cube
 					if (range <= this.raiseRadius) {
 						newRaiseHeight += ( this.raiseRadius - range ) * this.maxRaiseHeight / this.raiseRadius;
 						count++;
 					}
 				}
+
+				// If the cube has been affected by an active cube, change its raise height. Otherwise, degenerate its height gradually
 				cube.raiseHeight = (count > 0) ? newRaiseHeight : cube.raiseHeight * DEGENERATION;
 			}
 		}
 	}
 }
-
 
 const ANGLE = 120;
 const EDGE_LENGTH = canvasHeight/20; // canvasHeight/20 for 13x13, canvasHeight/30 for 24x24
