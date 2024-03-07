@@ -18,7 +18,7 @@ class OrthoCube {
 
 		this._initPoints();
 	}
-  
+
 	draw(coldCol, hotCol, maxRaiseHeight, dimensional=false) {
 		push();
 		noStroke();
@@ -287,7 +287,6 @@ const ANGLE = 120;
 const EDGE_LENGTH = canvasHeight/20; // canvasHeight/20 for 13x13, canvasHeight/30 for 24x24
 const SEPARATION = 3;
 
-
 const X = canvasWidth/2	
 const Y = canvasHeight/6; // canvasHeight/6 for 13x13, canvasHeight/18 for 24x24
 
@@ -297,15 +296,13 @@ const COL_COUNT = 13;
 
 const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
 const RAISE_RADIUS = 6;
-const DIMENSIONAL = false;
 
-const BGC = [0, 0, 0];
-const PSV_COL = [0, 0, 255];
-const ACV_COL = [255, 0, 0];
-
+const BGC = [0, 0, 130];
+const PSV_COL = [0, 120, 215];
+const ACV_COL = [255, 30, 10];
+const DIMENSIONAL = true;
 
 const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS, DIMENSIONAL);
-
 
 
 const REBOUND = true;
@@ -338,7 +335,6 @@ function draw_one_frame() {
 
 
 /* LEGACY
-const ANGLE = 120;
 const EDGE_LENGTH = canvasHeight/16;
 const SEPARATION = 3;
 
@@ -352,39 +348,5 @@ const COL_COUNT = 48;
 const MAX_RAISE_HEIGHT = EDGE_LENGTH * 2;
 const RAISE_RADIUS = 11;
 
-const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS);
-const BGC = [0, 0, 0];
-const PSV_COL = 50;
-const ACV_COL = [255, 180, 180];
-
-
 const REBOUND = false;
-
-let count = 0;
-const LIMIT = 1;
-const CHANCE = 0.05;
-
-function draw_one_frame() {
-	background(BGC);
-
-	grid.draw(PSV_COL, ACV_COL);
-
-	grid.propagateActiveCubes(REBOUND);
-
-
-	if (!REBOUND) {
-		if (grid.getAllActive().length < 1) {
-			if (Math.random() > 1 - CHANCE) {
-				grid.setActiveRandomEdgeCube();
-			}
-		}
-	}
-	else {
-		if (count < LIMIT) {
-			if (Math.random() > 1 - CHANCE) {
-				grid.setActiveRandomEdgeCube();
-				count++;
-			}
-		}
-	}
-} */
+*/
