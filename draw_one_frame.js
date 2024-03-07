@@ -19,15 +19,15 @@ class OrthoCube {
 		this._initPoints();
 	}
 
-	draw(coldCol, hotCol, maxRaiseHeight, dimensional=false) {
+	draw(coldCol, warmCol, maxRaiseHeight, dimensional=false) {
 		push();
 		noStroke();
 		translate(this.points[0][0], this.points[0][1]);
 
-		fill(this._heatMapColor(coldCol, hotCol, maxRaiseHeight));
+		fill(this._heatMapColor(coldCol, warmCol, maxRaiseHeight));
 
 		// Draws top rhombus
-		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1), this._colorBrightness(hotCol, 1), maxRaiseHeight));
+		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1), this._colorBrightness(warmCol, 1), maxRaiseHeight));
 		beginShape();
 		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -36,7 +36,7 @@ class OrthoCube {
 		endShape(CLOSE);
 
 		// Draws left rhombus
-		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 2/3), this._colorBrightness(hotCol, 2/3), maxRaiseHeight));
+		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 2/3), this._colorBrightness(warmCol, 2/3), maxRaiseHeight));
 		beginShape();
 		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -45,7 +45,7 @@ class OrthoCube {
 		endShape(CLOSE);
 
 		// Draws right rhombus
-		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1/3), this._colorBrightness(hotCol, 1/3), maxRaiseHeight));
+		if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1/3), this._colorBrightness(warmCol, 1/3), maxRaiseHeight));
 		beginShape();
 		vertex(0, - this.raiseHeight);                                   // A
 		vertex(this.points[2][0], this.points[2][1] - this.raiseHeight); // C
@@ -130,13 +130,17 @@ class OrthoCube {
 }
 
 class CubeGrid {
-	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, maxRaiseHeight, raiseRadius, dimensional) {
+	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, maxRaiseHeight, raiseRadius, dimensional, coldCol, warmCol) {
 		const SPEED = 1;
 
 		// x and y values for the very top cube
 		this.x = x;
 		this.y = y;
+
+		// Rendering
 		this.dimensional = dimensional;
+		this.coldCol = coldCol;
+		this.warmCol = warmCol;
 
 		// Maximum raise height for active cubes
 		this.maxRaiseHeight = maxRaiseHeight;
@@ -192,11 +196,11 @@ class CubeGrid {
 		}
 	}
 
-	draw(passiveCol, activeCol) {
+	draw() {
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				let cube = this.cubes[col][row];
-				cube.draw(passiveCol, activeCol, this.maxRaiseHeight, this.dimensional);
+				cube.draw(this.coldCol, this.warmCol, this.maxRaiseHeight, this.dimensional);
 			}
 		}
 	}
@@ -298,11 +302,11 @@ const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
 const RAISE_RADIUS = 6;
 
 const BGC = [0, 0, 130];
-const PSV_COL = [0, 120, 215];
-const ACV_COL = [255, 30, 10];
-const DIMENSIONAL = true;
+const COLD_COL = 50 //[0, 120, 215];
+const WARM_COL = [255, 10, 128] // [255, 30, 10];
+const DIMENSIONAL = false;
 
-const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS, DIMENSIONAL);
+const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS, DIMENSIONAL, COLD_COL, WARM_COL);
 
 
 const REBOUND = true;
@@ -319,7 +323,7 @@ grid.setActiveRandomEdgeCube();
 function draw_one_frame() {
 	background(BGC);
 
-	grid.draw(PSV_COL, ACV_COL);
+	grid.draw();
 
 	grid.propagateActiveCubes(REBOUND);
 
@@ -328,6 +332,7 @@ function draw_one_frame() {
 		if (grid.getAllActive().length < 1) {
 			if (Math.random() > 1 - CHANCE) {
 				grid.setActiveRandomEdgeCube();
+				
 			}
 		}
 	}
