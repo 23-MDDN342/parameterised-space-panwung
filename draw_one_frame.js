@@ -203,6 +203,10 @@ class OrthoGrid {
 		}
 	}
 
+	cubeDistanceFromActive = function(cube, activeCube) {
+		return Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 );
+	}
+
 	/**
 	 * Returns an array of all the current active cubes
 	 * @returns {Array} Array of all active cubes
@@ -440,10 +444,6 @@ class RandomPropagation {
 		edgeCube.step = 0;
 	}
 
-	_dist = function(cube, activeCube) {
-		return Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 );
-	}
-
 	_raiseAdjacentCubes = function() {
 		// Degeneration factor if a cube is not being influenced
 		const DEGENERATION = 0.85; 
@@ -459,7 +459,7 @@ class RandomPropagation {
 
 				for (let activeCube of activeCubes) {
 					maximumRange = (activeCube.step < this.maxRaiseRadius) ? activeCube.step : this.maxRaiseRadius;
-					let range = this._dist(cube, activeCube); // Get the distance from this cube to some active cube
+					let range = this.cubeDistanceFromActive(cube, activeCube); // Get the distance from this cube to some active cube
 					
 					// If the cube is within range, increase its new height based on its distance from that active cube
 					if (range <= maximumRange) {
@@ -551,7 +551,7 @@ const profile3 = {
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
 const BGC = [0, 0, 130];
-let REBOUND = false;
+let REBOUND = true;
 const CHANCE = 0.1;
 const LIMIT = 1;
 
@@ -584,10 +584,10 @@ const grid = new OrthoGrid(
 	sProfile2, 
 	cProfile1,
 	rProfile2, 
-	ripple
+	randomPropagation
 );
 
-// grid.setActiveRandomEdgeCube();
+grid.setActiveRandomEdgeCube();
 
 function draw_one_frame() {
 	// noLoop();
