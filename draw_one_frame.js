@@ -284,22 +284,25 @@ class RenderProfile {
 }
 
 class RandomPropagation {
+
 	/**
-	 * 
-	 * @param {Object} constructorArgs Object containing the parameters initializing
-	 * @param {Object} behaviourArgs Object containing the parameters for mainBehaviour(...) method
+	 * Properties to be added to OrthoGrid
+	 * @param {boolean} rebound Sets whether active cubes "rebound" once they hit the edge
+	 * @param {number} speed Number of cubes an active cube moved in one call of mainBehaviour()
+	 * @param {number} maxRaiseHeight Maximum raise height of cubes
+	 * @param {number} maxRaiseRadius Radius of circle around an active cube that determines how far it should be raised
 	 */
-	constructor(constructorArgs, behaviourArgs) {
-		this.behaviourArgs = behaviourArgs;
+	constructor(rebound, speed, maxRaiseHeight, maxRaiseRadius) {
 		this.edgeCubes = [];
 
-		this.speed = constructorArgs.speed;                   // Speed at which cubes move
-		this.maxRaiseHeight = constructorArgs.maxRaiseHeight; // Maximum raise height for active cubes
-		this.maxRaiseRadius = constructorArgs.maxRaiseRadius; // Radius of influence of active cubes 
+		this.rebound = rebound;
+		this.speed = speed;                   // Speed at which cubes move
+		this.maxRaiseHeight = maxRaiseHeight; // Maximum raise height for active cubes
+		this.maxRaiseRadius = maxRaiseRadius; // Radius of influence of active cubes 
 	}
 
 	/**
-	 * 
+	 * Properties to be added to OrthoCube
 	 * @param {Object} cube OrthoCube object
 	 */
 	initCubeProperties = function(cube) {
@@ -332,7 +335,7 @@ class RandomPropagation {
 	/**
 	 * Propagates active status to cubes based on propagation vector
 	 */
-	mainBehaviour = function(behaviourArgs) {
+	mainBehaviour = function() {
 		let activeCubes = this.getAllActive();
 
 		for (let activeCube of activeCubes) {
@@ -348,7 +351,7 @@ class RandomPropagation {
 				let nextCube = this.cubes[nextCol][nextRow];
 
 				// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
-				if (behaviourArgs.rebound) {
+				if (this.rebound) {
 					nextCube.active = true;
 					if (!this.edgeCubes.includes(nextCube)) nextCube.propagationVector = activeCube.propagationVector;
 				}
@@ -477,6 +480,10 @@ const profile3 = {
 
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
+const BGC = [0, 0, 130];
+let REBOUND = true;
+const CHANCE = 0.1;
+const LIMIT = 1;
 
 const cProfile1 = new CubeProfile(canvasHeight/20, 3, 120);
 const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128]);
@@ -487,18 +494,17 @@ const sProfile1 = new StructureProfile(
 	13, 
 );
 
-const grid = new OrthoGrid(sProfile1, cProfile1, rProfile1, new RandomPropagation( 
-	{maxRaiseHeight : cProfile1.edgeLength * 1.5, maxRaiseRadius : 6, speed : 1}, {rebound : true} 
-));
+const grid = new OrthoGrid(
+	sProfile1, cProfile1, rProfile1, 
+	new RandomPropagation( 
+		REBOUND, 1, cProfile1.edgeLength * 1.5, 6, 
+	)
+);
 
 
-const BGC = [0, 0, 130];
-let REBOUND = true;
-const CHANCE = 0.05;
+
 
 grid.setActiveRandomEdgeCube();
-// grid.setActiveRandomEdgeCube();
-// grid.setActiveRandomEdgeCube();
 
 function draw_one_frame() {
 	// noLoop();
@@ -506,11 +512,11 @@ function draw_one_frame() {
 
 	grid.draw();
 
-	grid.doBehaviour(REBOUND);
+	grid.doBehaviour();
 
 
 	if (!REBOUND) {
-		if (grid.getAllActive().length < 1) {
+		if (grid.getAllActive().length < LIMIT) {
 			if (Math.random() > 1 - CHANCE) {
 				grid.setActiveRandomEdgeCube();
 			}
