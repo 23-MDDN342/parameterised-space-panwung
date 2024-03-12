@@ -1,6 +1,21 @@
+/**
+ * The grid for orthographic cubes and the base class for behaviour objects to modify
+ */
 class OrthoGrid {
+	/**
+	 * Inner class of orthographically rendered cubes
+	 */
 	OrthoCube = class {
-		constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, propagationVector=undefined, active=false) {
+		/**
+		 * Constructor that can be modified with additional properties through behaviour objects
+		 * @param {number} xCenter x coord of cube centre
+		 * @param {number} yCenter y coord of cube centre
+		 * @param {number} gridPos Position on grid
+		 * @param {number} viewAngleDeg View angle of cube (in degrees)
+		 * @param {number} edgeLength Edge length of cube
+		 * @param {boolean} active Flags the cube as active or not
+		 */
+		constructor(xCenter, yCenter, gridPos, viewAngleDeg, edgeLength, active=false) {
 			// Positioning
 			this.points = [[
 				xCenter,  // Ax
@@ -8,7 +23,6 @@ class OrthoGrid {
 			]];
 	
 			this.gridPos = gridPos; // Position on grid
-			this.propagationVector = propagationVector; // The direction in which the cube moves
 	
 			// Rendering
 			this.viewAngle = viewAngleDeg * Math.PI / 180; // Conver to Rad
@@ -22,15 +36,22 @@ class OrthoGrid {
 			this._initPoints();
 		}
 	
-		draw(coldCol, warmCol, maxRaiseHeight, dimensional=false) {
+		/**
+		 * Draws the cube
+		 * @param {number|Array} coldCol Colour that is shown 100% if the colour lerp returns 0
+		 * @param {number|Array} warmCol Colour that is shown 100% if the colour lerp returns 1
+		 * @param {number} lerpUpperBound Maximum bound for colour lerping
+		 * @param {boolean} dimensional Controls the render style 
+		 */
+		draw(coldCol, warmCol, lerpUpperBound, dimensional=false) {
 			push();
 			noStroke();
 			translate(this.points[0][0], this.points[0][1]);
 	
-			fill(this._heatMapColor(coldCol, warmCol, maxRaiseHeight));
+			fill(this._heatMapColor(coldCol, warmCol, lerpUpperBound));
 	
 			// Draws top rhombus
-			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1), this._colorBrightness(warmCol, 1), maxRaiseHeight));
+			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1), this._colorBrightness(warmCol, 1), lerpUpperBound));
 			beginShape();
 			vertex(0, - this.raiseHeight);                                   // A
 			vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -39,7 +60,7 @@ class OrthoGrid {
 			endShape(CLOSE);
 	
 			// Draws left rhombus
-			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 2/3), this._colorBrightness(warmCol, 2/3), maxRaiseHeight));
+			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 2/3), this._colorBrightness(warmCol, 2/3), lerpUpperBound));
 			beginShape();
 			vertex(0, - this.raiseHeight);                                   // A
 			vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -48,7 +69,7 @@ class OrthoGrid {
 			endShape(CLOSE);
 	
 			// Draws right rhombus
-			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1/3), this._colorBrightness(warmCol, 1/3), maxRaiseHeight));
+			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1/3), this._colorBrightness(warmCol, 1/3), lerpUpperBound));
 			beginShape();
 			vertex(0, - this.raiseHeight);                                   // A
 			vertex(this.points[2][0], this.points[2][1] - this.raiseHeight); // C
@@ -59,15 +80,28 @@ class OrthoGrid {
 			pop();
 		}
 	
-		_heatMapColor(col1, col2, maxRaiseHeight) {
+		/**
+		 * Lerps between two given colours based on upper
+		 * @param {number|Array} col1 Colour that is shown 100% if the colour lerp returns 0
+		 * @param {number|Array} col2 Colour that is shown 100% if the colour lerp returns 1
+		 * @param {number} lerpUpperBound Maximum bound for colour lerping
+		 * @returns {Object} Returns a p5.Color object
+		 */
+		_heatMapColor(col1, col2, lerpUpperBound) {
 			push();
 			colorMode(RGB);
-			let heatCol = lerpColor(color(col1), color(col2), map(this.raiseHeight, 0, 1.25 * maxRaiseHeight, 0, 1));
+			let heatCol = lerpColor(color(col1), color(col2), map(this.raiseHeight, 0, 1.25 * lerpUpperBound, 0, 1));
 			pop();
 	
 			return heatCol;
 		}
 	
+		/**
+		 * Scales all the values in array or single number by some percent
+		 * @param {number|Array} cubeColor Colour to be rescaled
+		 * @param {number} percentage Percent to scale by
+		 * @returns {number|Array} Returns either a number or an array based on what datatype the colour is
+		 */
 		_colorBrightness(cubeColor, percentage) {
 			if (typeof cubeColor === "number") return cubeColor * percentage;
 			
@@ -132,6 +166,13 @@ class OrthoGrid {
 		get col() { return this.gridPos[1]; }
 	}
 
+	/**
+	 * Constructor of OrthoGrid
+	 * @param {Object} structureProfile Object containing the x and y coords, the max rows and columns
+	 * @param {Object} cubeProfile Object containing the cubes edge length, separation from one another, and the view angle (in degrees)
+	 * @param {Object} renderProfile Object containing the drawing style and colours of the cubes 
+	 * @param {Object} behaviourProfile Object containing the behaviour of the cubes
+	 */
 	constructor(structureProfile, cubeProfile, renderProfile, behaviourProfile) {
 		// Structure
 		this.x = structureProfile.x;                      // x coord of top cube
@@ -142,8 +183,6 @@ class OrthoGrid {
 		// Cube
 		this.edgeLength = cubeProfile.edgeLength;         // Edge length of cube
 		this.separation = cubeProfile.separation;         // Separation between cubes
-		this.maxRaiseHeight = cubeProfile.maxRaiseHeight; // Maximum raise height for active cubes
-		this.maxRaiseRadius = cubeProfile.maxRaiseRadius; // Radius of influence of active cubes 
 
 		// Rendering
 		this.dimensional = renderProfile.dimensional;     // Render either 3D or flat
@@ -151,20 +190,14 @@ class OrthoGrid {
 		this.warmCol = renderProfile.warmCol;             // Warmer colour of lerpColor
 
 		// Behaviour
-
 		for (const property in behaviourProfile) { this[property] = behaviourProfile[property]; } // Inherit all of the properties of the behaviourProfile
-
-		// this.speed = behaviourProfile.speed;              // Speed of propagation
-		const SPEED = 1;
-		// missing : behaviourProfile, speed
 		
 		// Building
 		this.cubes = []; // 2D array of cubes
-		this.edgeCubes = []; // Array of edge cubes
 
 		let x = this.x;
 		let y = this.y;
-		let viewAngleDeg = structureProfile.viewAngleDeg;
+		let viewAngleDeg = cubeProfile.viewAngleDeg;
 		let translationAngle = (Math.PI * (360 - 2 * viewAngleDeg)) / 720;
 		let translationX = (this.edgeLength + this.separation) * Math.cos(translationAngle); // How much to move horizontal when drawing next cube
 		let translationY = (this.edgeLength + this.separation) * Math.sin(translationAngle); // How much to move vertically when drawing next cube
@@ -180,32 +213,7 @@ class OrthoGrid {
 				let newCube = new this.OrthoCube(newX, newY, [row, col], viewAngleDeg, this.edgeLength)
 				rowArray.push(newCube);
 				
-				this.bInitCubeProperties(newCube);
-
-				// Sets the edge cubes propagation and speed, excluding the corner cubes
-				if (
-					!(row === 0 && col === 0) && 
-					!(row === 0 && col === this.maxCol - 1) &&
-					!(row === this.maxRow - 1 && col === 0) && 
-					!(row === this.maxRow - 1 && col === this.maxCol - 1)
-				) {
-					if (row === 0) {
-						newCube.propagationVector = [+SPEED, 0];
-						this.edgeCubes.push(newCube); 
-					}
-					else if (row === this.maxRow - 1) {
-						newCube.propagationVector = [-SPEED, 0];
-						this.edgeCubes.push(newCube);
-					}
-					else if (col === 0) {
-						newCube.propagationVector = [0, +SPEED]
-						this.edgeCubes.push(newCube);
-					}
-					else if (col === this.maxCol - 1) {
-						newCube.propagationVector = [0, -SPEED]
-						this.edgeCubes.push(newCube);
-					}
-				}
+				this.initCubeProperties(newCube); // Init additional cube properties needed for this given behaviour
 			}
 			this.cubes.push(rowArray);
 
@@ -215,6 +223,9 @@ class OrthoGrid {
 		}
 	}
 
+	/**
+	 * Draws all the cubes
+	 */
 	draw() {
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
@@ -225,10 +236,103 @@ class OrthoGrid {
 	}
 
 	/**
-	 * Propagates active status to cubes based on propagation vector
-	 * @param {boolean} rebound 
+	 * Returns an array of all the current active cubes
+	 * @returns {Array} Array of all active cubes
 	 */
-	propagateActiveCubes(rebound=true) {
+	getAllActive() {
+		let activeCubes = [];
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let activeCube = this.cubes[col][row];
+				if (activeCube.active) activeCubes.push(activeCube);
+			}
+		}
+		return activeCubes;
+	}
+
+	/**
+	 * Does the main behaviour
+	 */
+	doBehaviour() {
+		this.mainBehaviour(this.behaviourArgs);
+	}
+}
+
+class StructureProfile {
+	constructor(x, y, maxRow, maxCol) {
+		this.x = x;
+		this.y = y;
+		this.maxRow = maxRow;
+		this.maxCol = maxCol;
+	}
+}
+
+class CubeProfile {
+	constructor(edgeLength, separation, viewAngleDeg) {
+		this.edgeLength = edgeLength;
+		this.separation = separation;
+		this.viewAngleDeg = viewAngleDeg;
+	}
+}
+
+class RenderProfile {
+	constructor(dimensional, coldCol, warmCol) {
+		this.dimensional = dimensional;
+		this.coldCol = coldCol;
+		this.warmCol = warmCol;
+	}
+}
+
+class RandomPropagation {
+	/**
+	 * 
+	 * @param {Object} constructorArgs Object containing the parameters initializing
+	 * @param {Object} behaviourArgs Object containing the parameters for mainBehaviour(...) method
+	 */
+	constructor(constructorArgs, behaviourArgs) {
+		this.behaviourArgs = behaviourArgs;
+		this.edgeCubes = [];
+
+		this.speed = constructorArgs.speed;                   // Speed at which cubes move
+		this.maxRaiseHeight = constructorArgs.maxRaiseHeight; // Maximum raise height for active cubes
+		this.maxRaiseRadius = constructorArgs.maxRaiseRadius; // Radius of influence of active cubes 
+	}
+
+	/**
+	 * 
+	 * @param {Object} cube OrthoCube object
+	 */
+	initCubeProperties = function(cube) {
+		cube.step = 0;
+		if (
+			!(cube.row === 0 && cube.col === 0) && 
+			!(cube.row === 0 && cube.col === this.maxCol - 1) &&
+			!(cube.row === this.maxRow - 1 && cube.col === 0) && 
+			!(cube.row === this.maxRow - 1 && cube.col === this.maxCol - 1)
+		) {
+			if (cube.row === 0) {
+				cube.propagationVector = [+this.speed, 0];
+				this.edgeCubes.push(cube); 
+			}
+			else if (cube.row === this.maxRow - 1) {
+				cube.propagationVector = [-this.speed, 0];
+				this.edgeCubes.push(cube);
+			}
+			else if (cube.col === 0) {
+				cube.propagationVector = [0, +this.speed]
+				this.edgeCubes.push(cube);
+			}
+			else if (cube.col === this.maxCol - 1) {
+				cube.propagationVector = [0, -this.speed]
+				this.edgeCubes.push(cube);
+			}
+		}
+	}
+
+	/**
+	 * Propagates active status to cubes based on propagation vector
+	 */
+	mainBehaviour = function(behaviourArgs) {
 		let activeCubes = this.getAllActive();
 
 		for (let activeCube of activeCubes) {
@@ -244,7 +348,7 @@ class OrthoGrid {
 				let nextCube = this.cubes[nextCol][nextRow];
 
 				// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
-				if (rebound) {
+				if (behaviourArgs.rebound) {
 					nextCube.active = true;
 					if (!this.edgeCubes.includes(nextCube)) nextCube.propagationVector = activeCube.propagationVector;
 				}
@@ -264,30 +368,19 @@ class OrthoGrid {
 		this._raiseAdjacentCubes();
 	}
 
-	getAllActive() {
-		let activeCubes = [];
-		for (let col=0; col<this.cubes.length; col++) {
-			for (let row=0; row<this.cubes[0].length; row++) {
-				let activeCube = this.cubes[col][row];
-				if (activeCube.active) activeCubes.push(activeCube);
-			}
-		}
-		return activeCubes;
-	}
-
 	/**
 	 * Sets the height of each cube based on distance from active cubes
 	 */
-	setActiveRandomEdgeCube() {
+	setActiveRandomEdgeCube = function() {
 		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
 		edgeCube.active = true;
 	}
 
-	_dist(cube, activeCube) {
+	_dist = function(cube, activeCube) {
 		return Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 );
 	}
 
-	_raiseAdjacentCubes() {
+	_raiseAdjacentCubes = function() {
 		// Degeneration factor if a cube is not being influenced
 		const DEGENERATION = 0.85; 
 
@@ -313,43 +406,6 @@ class OrthoGrid {
 				cube.raiseHeight = (count > 0) ? newRaiseHeight : cube.raiseHeight * DEGENERATION;
 			}
 		}
-	}
-}
-
-class StructureProfile {
-	constructor(x, y, maxRow, maxCol, viewAngleDeg) {
-		this.x = x;
-		this.y = y;
-		this.maxRow = maxRow;
-		this.maxCol = maxCol;
-		this.viewAngleDeg = viewAngleDeg;
-	}
-}
-
-class CubeProfile {
-	constructor(edgeLength, separation, maxRaiseHeight, maxRaiseRadius) {
-		this.edgeLength = edgeLength;
-		this.separation = separation;
-		this.maxRaiseHeight = maxRaiseHeight;
-		this.maxRaiseRadius = maxRaiseRadius;
-	}
-}
-
-class RenderProfile {
-	constructor(dimensional, coldCol, warmCol) {
-		this.dimensional = dimensional;
-		this.coldCol = coldCol;
-		this.warmCol = warmCol;
-	}
-}
-
-class RandomPropagation {
-	constructor() {
-		this.silly = true;
-	}
-
-	bInitCubeProperties = function(cube) {
-		console.log("waaaah");
 	}
 }
 
@@ -422,34 +478,35 @@ const profile3 = {
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
 
-const cProfile1 = new CubeProfile(canvasHeight/20, 3, canvasHeight/20 * 1.5, 6);
+const cProfile1 = new CubeProfile(canvasHeight/20, 3, 120);
 const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128]);
 const sProfile1 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + 2 * (cProfile1.edgeLength + cProfile1.separation) * Math.cos( 120 / 2 ) * 13 / 4,
 	13,
 	13, 
-	120
 );
 
-const grid = new OrthoGrid(sProfile1, cProfile1, rProfile1, new RandomPropagation());
+const grid = new OrthoGrid(sProfile1, cProfile1, rProfile1, new RandomPropagation( 
+	{maxRaiseHeight : cProfile1.edgeLength * 1.5, maxRaiseRadius : 6, speed : 1}, {rebound : true} 
+));
 
 
 const BGC = [0, 0, 130];
 let REBOUND = true;
 const CHANCE = 0.05;
 
-// grid.setActiveRandomEdgeCube();
+grid.setActiveRandomEdgeCube();
 // grid.setActiveRandomEdgeCube();
 // grid.setActiveRandomEdgeCube();
 
 function draw_one_frame() {
-	noLoop();
+	// noLoop();
 	background(BGC);
 
 	grid.draw();
 
-	grid.propagateActiveCubes(REBOUND);
+	grid.doBehaviour(REBOUND);
 
 
 	if (!REBOUND) {
