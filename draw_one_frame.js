@@ -344,7 +344,8 @@ class OrthoGrid {
  * offset- make cubes offset spawning
  * gradually raise- make cubes raise gradually
  * behaviour- make cubes have different behavour
- * easing- implement easing for movement
+ * easing- implement easing for movement // DONT DO THIS, IT ISN'T POSSIBLE WITHOUT ADJUSTING SPEED
+ * easing height- make cubes raise gradually
  */
 
 const profile1 = {
