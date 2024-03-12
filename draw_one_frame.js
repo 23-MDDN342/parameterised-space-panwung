@@ -209,6 +209,10 @@ class OrthoGrid {
 		}
 	}
 
+	/**
+	 * Propagates active status to cubes based on propagation vector
+	 * @param {boolean} rebound 
+	 */
 	propagateActiveCubes(rebound=true) {
 		let activeCubes = this.getAllActive();
 
@@ -256,6 +260,9 @@ class OrthoGrid {
 		return activeCubes;
 	}
 
+	/**
+	 * Sets the height of each cube based on distance from active cubes
+	 */
 	setActiveRandomEdgeCube() {
 		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
 		edgeCube.active = true;
@@ -315,6 +322,19 @@ class OrthoGrid {
 		);
 	}
 }
+
+
+/**
+ * AN INTERESTING THOUGHT:
+ * each profile object can have a method which will have a different effect
+ * this special method will be called somewhere, probably propagateActiveCubes(...)
+ * this method could be something like a different propagation function, or something else
+ * maybe like instead of propagating it ripples?
+ * 
+ * make a separate method that will be called in draw_one_frame() called behaviour(),
+ * this will store what effect the cubes will have.
+ * if none is provided, use propagateActiveCubes(...)
+ */
 
 const profile1 = {
 	rowCount : 13,
