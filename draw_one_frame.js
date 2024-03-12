@@ -170,7 +170,7 @@ class OrthoGrid {
 	 * Constructor of OrthoGrid
 	 * @param {Object} structureProfile Object containing the x and y coords, the max rows and columns
 	 * @param {Object} cubeProfile Object containing the cubes edge length, separation from one another, and the view angle (in degrees)
-	 * @param {Object} renderProfile Object containing the drawing style and colours of the cubes 
+	 * @param {Object} renderProfile Object containing the drawing style and colours of the cubes, as well as the upper lerp bound
 	 * @param {Object} behaviourProfile Object containing the behaviour of the cubes
 	 */
 	constructor(structureProfile, cubeProfile, renderProfile, behaviourProfile) {
@@ -188,6 +188,103 @@ class OrthoGrid {
 		} 
 		
 		// Building
+		this.buildGrid();
+	}
+
+	/**
+	 * Draws all the cubes
+	 */
+	draw() {
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let cube = this.cubes[col][row];
+				cube.draw(this.coldCol, this.warmCol, this.lerpUpperBound, this.dimensional);
+			}
+		}
+	}
+
+	/**
+	 * Returns an array of all the current active cubes
+	 * @returns {Array} Array of all active cubes
+	 */
+	getAllActive() {
+		let activeCubes = [];
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let activeCube = this.cubes[col][row];
+				if (activeCube.active) activeCubes.push(activeCube);
+			}
+		}
+		return activeCubes;
+	}
+
+	/**
+	 * Does the main behaviour
+	 */
+	doBehaviour() {
+		this.mainBehaviour();
+	}
+
+	/**
+	 * Loads date from structureProfile objects to OrthoGrid properties
+	 * @param {Object} structureProfile Uses this object to set property values
+	 */
+	loadStructureProfile(structureProfile) {
+		this.x = structureProfile.x;                        // x coord of top cube
+		this.y = structureProfile.y;                        // y coord of top cube 
+		this.maxRow = structureProfile.maxRow;              // Max row of grid
+		this.maxCol = structureProfile.maxCol;              // Max column of grid
+	}
+
+	/**
+	 * Loads date from cubeProfile objects to OrthoGrid properties
+	 * @param {Object} cubeProfile Uses this object to set property values
+	 */
+	loadCubeProfile(cubeProfile) {
+		this.edgeLength = cubeProfile.edgeLength;           // Edge length of cube
+		this.separation = cubeProfile.separation;           // Separation between cubes
+		this.viewAngleDeg = cubeProfile.viewAngleDeg;       // View angle of cube
+	}
+
+	/**
+	 * Loads date from renderProfile objects to OrthoGrid properties
+	 * @param {Object} renderProfile Uses this object to set property values
+	 */
+	loadRenderProfile(renderProfile) {
+		this.dimensional = renderProfile.dimensional;       // Render either 3D or flat
+		this.coldCol = renderProfile.coldCol;               // Lower colour of lerpColor
+		this.warmCol = renderProfile.warmCol;               // Warmer colour of lerpColor
+		this.lerpUpperBound = renderProfile.lerpUpperBound; // Upper bound for lerp
+	}
+
+	/**
+	 * Loads date from behaviourProfile objects to OrthoGrid properties
+	 * @param {Object} behaviourProfile Uses this object to set property values and destroy old ones
+	 */
+	loadBehaviourProfile(behaviourProfile) {
+		// Purge old
+		for (let property of this.addedBehaviouralProperties) { delete this[property]; }
+		this.addedBehaviouralProperties = [];
+		
+		// Inherit all of the properties of the behaviourProfile
+		for (let property in behaviourProfile) { 
+			this[property] = behaviourProfile[property]; 
+			this.addedBehaviouralProperties.push(property);
+		} 
+
+		// Add new properties to cubes
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				this.cubes[col][row].active = false;
+				this.initCubeProperties(this.cubes[col][row]);
+			}
+		}
+	}
+
+	/**
+	 * Builds the grid based on the properties
+	 */
+	buildGrid() {
 		this.cubes = []; // 2D array of cubes
 
 		let x = this.x;
@@ -216,80 +313,6 @@ class OrthoGrid {
 			y += translationY;
 		}
 	}
-
-	/**
-	 * Draws all the cubes
-	 */
-	draw() {
-		for (let col=0; col<this.cubes.length; col++) {
-			for (let row=0; row<this.cubes[0].length; row++) {
-				let cube = this.cubes[col][row];
-				cube.draw(this.coldCol, this.warmCol, this.maxRaiseHeight, this.dimensional);
-			}
-		}
-	}
-
-	/**
-	 * Returns an array of all the current active cubes
-	 * @returns {Array} Array of all active cubes
-	 */
-	getAllActive() {
-		let activeCubes = [];
-		for (let col=0; col<this.cubes.length; col++) {
-			for (let row=0; row<this.cubes[0].length; row++) {
-				let activeCube = this.cubes[col][row];
-				if (activeCube.active) activeCubes.push(activeCube);
-			}
-		}
-		return activeCubes;
-	}
-
-	/**
-	 * Does the main behaviour
-	 */
-	doBehaviour() {
-		this.mainBehaviour();
-	}
-
-	loadStructureProfile(structureProfile) {
-		this.x = structureProfile.x;                      // x coord of top cube
-		this.y = structureProfile.y;                      // y coord of top cube 
-		this.maxRow = structureProfile.maxRow;            // Max row of grid
-		this.maxCol = structureProfile.maxCol;            // Max column of grid
-	}
-
-	loadCubeProfile(cubeProfile) {
-		this.edgeLength = cubeProfile.edgeLength;         // Edge length of cube
-		this.separation = cubeProfile.separation;         // Separation between cubes
-		this.viewAngleDeg = cubeProfile.viewAngleDeg;     // View angle of cube
-	}
-
-	loadRenderProfile(renderProfile) {
-		this.dimensional = renderProfile.dimensional;     // Render either 3D or flat
-		this.coldCol = renderProfile.coldCol;             // Lower colour of lerpColor
-		this.warmCol = renderProfile.warmCol;             // Warmer colour of lerpColor
-	}
-
-	loadBehaviourProfile(behaviourProfile) {
-		// Purge old
-		for (let property of this.addedBehaviouralProperties) { delete this[property]; }
-		this.addedBehaviouralProperties = [];
-		
-		// Inherit all of the properties of the behaviourProfile
-		for (let property in behaviourProfile) { 
-			this[property] = behaviourProfile[property]; 
-			this.addedBehaviouralProperties.push(property);
-		} 
-
-		// Add new properties to cubes
-		for (let col=0; col<this.cubes.length; col++) {
-			for (let row=0; row<this.cubes[0].length; row++) {
-				this.initCubeProperties(this.cubes[col][row]);
-			}
-		}
-
-
-	}
 	
 }
 
@@ -311,15 +334,15 @@ class CubeProfile {
 }
 
 class RenderProfile {
-	constructor(dimensional, coldCol, warmCol) {
+	constructor(dimensional, coldCol, warmCol, lerpUpperBound) {
 		this.dimensional = dimensional;
 		this.coldCol = coldCol;
 		this.warmCol = warmCol;
+		this.lerpUpperBound = lerpUpperBound;
 	}
 }
 
 class RandomPropagation {
-
 	/**
 	 * Properties to be added to OrthoGrid
 	 * @param {boolean} rebound Sets whether active cubes "rebound" once they hit the edge
@@ -533,22 +556,38 @@ const CHANCE = 0.1;
 const LIMIT = 1;
 
 const cProfile1 = new CubeProfile(canvasHeight/20, 3, 120);
-const rProfile1 = new RenderProfile(true, [50, 50, 50], [255, 10, 128]);
+const rProfile1 = new RenderProfile(true, [50, 50, 50], [255, 10, 128], cProfile1.edgeLength * 1.5);
 const sProfile1 = new StructureProfile(
 	canvasWidth/2, 
-	canvasHeight/2 + 2 * (cProfile1.edgeLength + cProfile1.separation) * Math.cos( 120 / 2 ) * 13 / 4,
+	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 13 / 2,
 	13,
 	13, 
 );
+const randomPropagation = new RandomPropagation( 
+	REBOUND, 1, cProfile1.edgeLength * 1.5, 6, 
+)
 
-const grid = new OrthoGrid(
-	sProfile1, cProfile1, rProfile1, 
-	new RandomPropagation( 
-		REBOUND, 1, cProfile1.edgeLength * 1.5, 6, 
-	)
+const rProfile2 = new RenderProfile(true, [0, 120, 215], [255, 30, 10], cProfile1.edgeLength * 1.5);
+const sProfile2 = new StructureProfile(
+	canvasWidth/2, 
+	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 11 / 2,
+	11,
+	11
 );
 
-grid.setActiveRandomEdgeCube();
+const ripple = new Ripple(
+
+);
+
+
+const grid = new OrthoGrid(
+	sProfile2, 
+	cProfile1,
+	rProfile2, 
+	ripple
+);
+
+// grid.setActiveRandomEdgeCube();
 
 function draw_one_frame() {
 	// noLoop();
@@ -559,11 +598,11 @@ function draw_one_frame() {
 	grid.doBehaviour();
 
 
-	if (!REBOUND) {
-		if (grid.getAllActive().length < LIMIT) {
-			if (Math.random() > 1 - CHANCE) {
-				grid.setActiveRandomEdgeCube();
-			}
-		}
-	}
+	// if (!REBOUND) {
+		// if (grid.getAllActive().length < LIMIT) {
+			// if (Math.random() > 1 - CHANCE) {
+				// grid.setActiveRandomEdgeCube();
+			// }
+		// }
+	// }
 }
