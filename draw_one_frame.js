@@ -209,6 +209,10 @@ class OrthoGrid {
 		}
 	}
 
+	behaviour() {
+
+	}
+
 	/**
 	 * Propagates active status to cubes based on propagation vector
 	 * @param {boolean} rebound 
@@ -334,6 +338,12 @@ class OrthoGrid {
  * make a separate method that will be called in draw_one_frame() called behaviour(),
  * this will store what effect the cubes will have.
  * if none is provided, use propagateActiveCubes(...)
+ * 
+ * TODO:
+ * noise- make the spawning predictable
+ * offset- make cubes offset spawning
+ * gradually raise- make cubes raise gradually
+ * behaviour- make cubes have different behavour
  */
 
 const profile1 = {
@@ -379,7 +389,7 @@ const profile3 = {
 }
 
 
-const grid = OrthoGrid.loadProfile(profile3);
+const grid = OrthoGrid.loadProfile(profile2);
 
 const BGC = [0, 0, 130];
 let REBOUND = true;
