@@ -131,17 +131,18 @@ class OrthoCube {
 	get col() { return this.gridPos[1]; }
 }
 
-class CubeGrid {
+class OrthoGrid {
 	constructor(x, y, maxRow, maxCol, viewAngleDeg, edgeLength, separation, maxRaiseHeight, raiseRadius, dimensional, coldCol, warmCol) {
-		
+
 		// Positioning
 		this.x = x; // x coord of top cube
 		this.y = y; // y coord of top cube
-
-		const SPEED = 1; // Speed at which cubes "move"
+		
 		this.maxRaiseHeight = maxRaiseHeight; // Maximum raise height for active cubes
 		this.raiseRadius = raiseRadius; // Radius of influence of active cubes 
-		
+
+		const SPEED = 1; // Speed at which cubes "move"
+
 		// Rendering
 		this.dimensional = dimensional;
 		this.coldCol = coldCol;
@@ -291,37 +292,79 @@ class CubeGrid {
 			}
 		}
 	}
+
+	/**
+	 * Use this method for making OrthoGrid objects
+	 */
+	static loadProfile(profile) {
+		return new OrthoGrid(
+			canvasWidth/2, 
+			canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4,
+			profile.rowCount, 
+			profile.colCount,
+
+			profile.angle,
+			profile.edgeLength,
+			profile.separation,
+			profile.edgeLength * 1.5,
+			profile.raiseRadius,
+
+			profile.dimensional,
+			profile.coldCol,
+			profile.warmCol
+		);
+	}
 }
 
-const ANGLE = 120;
-const EDGE_LENGTH = canvasHeight/20; // canvasHeight/20 for 13x13, canvasHeight/30 for 24x24
-const SEPARATION = 3;
+const profile1 = {
+	rowCount : 13,
+	colCount : 13, 
 
-const X = canvasWidth/2	
-const Y = canvasHeight/6; // canvasHeight/6 for 13x13, canvasHeight/18 for 24x24
+	angle : 120,
+	edgeLength : canvasHeight/20,
+	separation : 3, // make this number scale
+	raiseRadius : 6,
 
-// 13x13 is perfect for rebounding, 24x24 is perfect for linear
-const ROW_COUNT = 13; 
-const COL_COUNT = 13; 
+	dimensional : false,
+	coldCol : [50, 50, 50],
+	warmCol : [255, 10, 128],
+}
 
-const MAX_RAISE_HEIGHT = EDGE_LENGTH * 1.5;
-const RAISE_RADIUS = 6;
+const profile2 = {
+	rowCount : 24,
+	colCount : 24, 
+
+	angle : 120,
+	edgeLength : canvasHeight/30,
+	separation : 3, // make this number scale
+	raiseRadius : 12,
+
+	dimensional : false,
+	coldCol : [0, 120, 215],
+	warmCol : [255, 30, 10],
+}
+
+const profile3 = {
+	rowCount : 32,
+	colCount : 32, 
+
+	angle : 120,
+	edgeLength : canvasHeight/12,
+	separation : 3, // make this number scale
+	raiseRadius : 6,
+
+	dimensional : true,
+	coldCol : 35,
+	warmCol : 200,
+}
+
+
+const grid = OrthoGrid.loadProfile(profile3);
 
 const BGC = [0, 0, 130];
-const COLD_COL = 50 //[0, 120, 215];
-const WARM_COL = [255, 10, 128] // [255, 30, 10];
-const DIMENSIONAL = false;
-
-const grid = new CubeGrid(X, Y, ROW_COUNT, COL_COUNT, ANGLE, EDGE_LENGTH, SEPARATION, MAX_RAISE_HEIGHT, RAISE_RADIUS, DIMENSIONAL, COLD_COL, WARM_COL);
-
-
-const REBOUND = true;
-
-let count = 0;
-const LIMIT = 3;
+let REBOUND = true;
 const CHANCE = 0.05;
 
-grid.setActiveRandomEdgeCube();
 grid.setActiveRandomEdgeCube();
 grid.setActiveRandomEdgeCube();
 grid.setActiveRandomEdgeCube();
@@ -338,26 +381,7 @@ function draw_one_frame() {
 		if (grid.getAllActive().length < 1) {
 			if (Math.random() > 1 - CHANCE) {
 				grid.setActiveRandomEdgeCube();
-				
 			}
 		}
 	}
 }
-
-
-/* LEGACY
-const EDGE_LENGTH = canvasHeight/16;
-const SEPARATION = 3;
-
-const X = canvasWidth/2	
-const Y = -canvasHeight; // canvasHeight/6 for 13x13, -canvasHeight/5 for 24x24
-
-// 13x13 is perfect for rebounding, 24x24 is perfect for linear
-const ROW_COUNT = 48; 
-const COL_COUNT = 48; 
-
-const MAX_RAISE_HEIGHT = EDGE_LENGTH * 2;
-const RAISE_RADIUS = 11;
-
-const REBOUND = false;
-*/
