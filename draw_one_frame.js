@@ -174,31 +174,25 @@ class OrthoGrid {
 	 * @param {Object} behaviourProfile Object containing the behaviour of the cubes
 	 */
 	constructor(structureProfile, cubeProfile, renderProfile, behaviourProfile) {
-		// Structure
-		this.x = structureProfile.x;                      // x coord of top cube
-		this.y = structureProfile.y;                      // y coord of top cube 
-		this.maxRow = structureProfile.maxRow;            // Max row of grid
-		this.maxCol = structureProfile.maxCol;            // Max column of grid
-
-		// Cube
-		this.edgeLength = cubeProfile.edgeLength;         // Edge length of cube
-		this.separation = cubeProfile.separation;         // Separation between cubes
-
-		// Rendering
-		this.dimensional = renderProfile.dimensional;     // Render either 3D or flat
-		this.coldCol = renderProfile.coldCol;             // Lower colour of lerpColor
-		this.warmCol = renderProfile.warmCol;             // Warmer colour of lerpColor
+		this.loadStructureProfile(structureProfile);
+		this.loadCubeProfile(cubeProfile);
+		this.loadRenderProfile(renderProfile);
 
 		// Behaviour
-		for (const property in behaviourProfile) { this[property] = behaviourProfile[property]; } // Inherit all of the properties of the behaviourProfile
+		this.addedBehaviouralProperties = [];
+
+		// Inherit all of the properties of the behaviourProfile
+		for (let property in behaviourProfile) { 
+			this[property] = behaviourProfile[property]; 
+			this.addedBehaviouralProperties.push(property);
+		} 
 		
 		// Building
 		this.cubes = []; // 2D array of cubes
 
 		let x = this.x;
 		let y = this.y;
-		let viewAngleDeg = cubeProfile.viewAngleDeg;
-		let translationAngle = (Math.PI * (360 - 2 * viewAngleDeg)) / 720;
+		let translationAngle = (Math.PI * (360 - 2 * this.viewAngleDeg)) / 720;
 		let translationX = (this.edgeLength + this.separation) * Math.cos(translationAngle); // How much to move horizontal when drawing next cube
 		let translationY = (this.edgeLength + this.separation) * Math.sin(translationAngle); // How much to move vertically when drawing next cube
 
@@ -210,7 +204,7 @@ class OrthoGrid {
 				let newX = x + row * translationX;
 				let newY = y + row * translationY;
 
-				let newCube = new this.OrthoCube(newX, newY, [row, col], viewAngleDeg, this.edgeLength)
+				let newCube = new this.OrthoCube(newX, newY, [row, col], this.viewAngleDeg, this.edgeLength)
 				rowArray.push(newCube);
 				
 				this.initCubeProperties(newCube); // Init additional cube properties needed for this given behaviour
@@ -254,8 +248,49 @@ class OrthoGrid {
 	 * Does the main behaviour
 	 */
 	doBehaviour() {
-		this.mainBehaviour(this.behaviourArgs);
+		this.mainBehaviour();
 	}
+
+	loadStructureProfile(structureProfile) {
+		this.x = structureProfile.x;                      // x coord of top cube
+		this.y = structureProfile.y;                      // y coord of top cube 
+		this.maxRow = structureProfile.maxRow;            // Max row of grid
+		this.maxCol = structureProfile.maxCol;            // Max column of grid
+	}
+
+	loadCubeProfile(cubeProfile) {
+		this.edgeLength = cubeProfile.edgeLength;         // Edge length of cube
+		this.separation = cubeProfile.separation;         // Separation between cubes
+		this.viewAngleDeg = cubeProfile.viewAngleDeg;     // View angle of cube
+	}
+
+	loadRenderProfile(renderProfile) {
+		this.dimensional = renderProfile.dimensional;     // Render either 3D or flat
+		this.coldCol = renderProfile.coldCol;             // Lower colour of lerpColor
+		this.warmCol = renderProfile.warmCol;             // Warmer colour of lerpColor
+	}
+
+	loadBehaviourProfile(behaviourProfile) {
+		// Purge old
+		for (let property of this.addedBehaviouralProperties) { delete this[property]; }
+		this.addedBehaviouralProperties = [];
+		
+		// Inherit all of the properties of the behaviourProfile
+		for (let property in behaviourProfile) { 
+			this[property] = behaviourProfile[property]; 
+			this.addedBehaviouralProperties.push(property);
+		} 
+
+		// Add new properties to cubes
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				this.initCubeProperties(this.cubes[col][row]);
+			}
+		}
+
+
+	}
+	
 }
 
 class StructureProfile {
@@ -349,6 +384,7 @@ class RandomPropagation {
 				nextCol >= 0 && nextCol < this.cubes.length
 			) {
 				let nextCube = this.cubes[nextCol][nextRow];
+				nextCube.step = activeCube.step + this.speed;
 
 				// Set the next cube's active to true and, if it is not an edge cube, set its propagation to the active 
 				if (this.rebound) {
@@ -365,6 +401,7 @@ class RandomPropagation {
 
 			// Set the active cube to false and reset its propagation, unless it is an edge cube
 			activeCube.active = false;
+			activeCube.step = 0;
 			if (!this.edgeCubes.includes(activeCube)) activeCube.propagationVector = undefined;
 		}
 
@@ -377,6 +414,7 @@ class RandomPropagation {
 	setActiveRandomEdgeCube = function() {
 		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
 		edgeCube.active = true;
+		edgeCube.step = 0;
 	}
 
 	_dist = function(cube, activeCube) {
@@ -394,13 +432,15 @@ class RandomPropagation {
 				let count = 0; // How many active cubes have influenced this cube
 				let newRaiseHeight = 0; // New raise height of the cube
 				let cube = this.cubes[col][row];
+				let maximumRange;
 
 				for (let activeCube of activeCubes) {
+					maximumRange = (activeCube.step < this.maxRaiseRadius) ? activeCube.step : this.maxRaiseRadius;
 					let range = this._dist(cube, activeCube); // Get the distance from this cube to some active cube
 					
 					// If the cube is within range, increase its new height based on its distance from that active cube
-					if (range <= this.maxRaiseRadius) {
-						newRaiseHeight += ( this.maxRaiseRadius - range ) * this.maxRaiseHeight / this.maxRaiseRadius;
+					if (range <= maximumRange) {
+						newRaiseHeight += ( maximumRange - range ) * this.maxRaiseHeight / maximumRange;
 						count++;
 					}
 				}
@@ -412,7 +452,17 @@ class RandomPropagation {
 	}
 }
 
+class Ripple {
+	constructor() {
+	}
 
+	initCubeProperties = function(cube) {
+
+	}
+	mainBehaviour = function() {
+		
+	}
+}
 
 /**
  * AN INTERESTING THOUGHT:
@@ -428,10 +478,7 @@ class RandomPropagation {
  * TODO:
  * noise- make the spawning predictable
  * offset- make cubes offset spawning
- * gradually raise- make cubes raise gradually
  * behaviour- make cubes have different behavour
- * easing- implement easing for movement // DONT DO THIS, IT ISN'T POSSIBLE WITHOUT ADJUSTING SPEED
- * easing height- make cubes raise gradually
  */
 
 
@@ -481,12 +528,12 @@ const profile3 = {
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
 const BGC = [0, 0, 130];
-let REBOUND = true;
+let REBOUND = false;
 const CHANCE = 0.1;
 const LIMIT = 1;
 
 const cProfile1 = new CubeProfile(canvasHeight/20, 3, 120);
-const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128]);
+const rProfile1 = new RenderProfile(true, [50, 50, 50], [255, 10, 128]);
 const sProfile1 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + 2 * (cProfile1.edgeLength + cProfile1.separation) * Math.cos( 120 / 2 ) * 13 / 4,
@@ -500,9 +547,6 @@ const grid = new OrthoGrid(
 		REBOUND, 1, cProfile1.edgeLength * 1.5, 6, 
 	)
 );
-
-
-
 
 grid.setActiveRandomEdgeCube();
 
