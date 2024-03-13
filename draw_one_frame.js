@@ -188,7 +188,7 @@ class OrthoGrid {
 		} 
 		
 		// Building
-		this.buildGrid();
+		this.build();
 	}
 
 	/**
@@ -225,8 +225,8 @@ class OrthoGrid {
 	/**
 	 * Does the main behaviour
 	 */
-	doBehaviour() {
-		this.mainBehaviour();
+	doBehaviour(cur_frac) {
+		this.mainBehaviour(cur_frac);
 	}
 
 	/**
@@ -238,6 +238,9 @@ class OrthoGrid {
 		this.y = structureProfile.y;                        // y coord of top cube 
 		this.maxRow = structureProfile.maxRow;              // Max row of grid
 		this.maxCol = structureProfile.maxCol;              // Max column of grid
+
+		console.log("Loaded new structure profile");
+		console.log("Rebuilding may be required (use build)");
 	}
 
 	/**
@@ -248,6 +251,9 @@ class OrthoGrid {
 		this.edgeLength = cubeProfile.edgeLength;           // Edge length of cube
 		this.separation = cubeProfile.separation;           // Separation between cubes
 		this.viewAngleDeg = cubeProfile.viewAngleDeg;       // View angle of cube
+
+		console.log("Loaded new cube profile");
+		console.log("Rebuilding may be required (use build)");
 	}
 
 	/**
@@ -259,6 +265,9 @@ class OrthoGrid {
 		this.coldCol = renderProfile.coldCol;               // Lower colour of lerpColor
 		this.warmCol = renderProfile.warmCol;               // Warmer colour of lerpColor
 		this.lerpUpperBound = renderProfile.lerpUpperBound; // Upper bound for lerp
+
+		console.log("Loaded new render profile");
+		console.log("Rebuilding may be required (use build)");
 	}
 
 	/**
@@ -283,12 +292,15 @@ class OrthoGrid {
 				this.initCubeProperties(this.cubes[col][row]);
 			}
 		}
+
+		console.log("Loaded new structure profile");
+		console.log("Rebuilding may be required (use build)");
 	}
 
 	/**
 	 * Builds the grid based on the properties
 	 */
-	buildGrid() {
+	build() {
 		this.cubes = []; // 2D array of cubes
 
 		let x = this.x;
@@ -305,7 +317,7 @@ class OrthoGrid {
 				let newX = x + row * translationX;
 				let newY = y + row * translationY;
 
-				let newCube = new this.OrthoCube(newX, newY, [row, col], this.viewAngleDeg, this.edgeLength)
+				let newCube = new this.OrthoCube(newX, newY, [row, col], this.viewAngleDeg, this.edgeLength);
 				rowArray.push(newCube);
 				
 				this.initCubeProperties(newCube); // Init additional cube properties needed for this given behaviour
@@ -316,8 +328,9 @@ class OrthoGrid {
 			x -= translationX;
 			y += translationY;
 		}
+
+		console.log("Grid built");
 	}
-	
 }
 
 class StructureProfile {
@@ -353,14 +366,19 @@ class RandomPropagation {
 	 * @param {number} speed Number of cubes an active cube moved in one call of mainBehaviour()
 	 * @param {number} maxRaiseHeight Maximum raise height of cubes
 	 * @param {number} maxRaiseRadius Radius of circle around an active cube that determines how far it should be raised
+	 * @param {number} limit If rebound is false, this is the max number of active cubes allowed to exist
+	 * @param {number} chanceIf rebound is false, this is the chance of an active cube spawning
 	 */
-	constructor(rebound, speed, maxRaiseHeight, maxRaiseRadius) {
+	constructor(rebound, speed, maxRaiseHeight, maxRaiseRadius, limit, chance) {
 		this.edgeCubes = [];
 
 		this.rebound = rebound;
 		this.speed = speed;                   // Speed at which cubes move
 		this.maxRaiseHeight = maxRaiseHeight; // Maximum raise height for active cubes
 		this.maxRaiseRadius = maxRaiseRadius; // Radius of influence of active cubes 
+
+		this.limit = limit;
+		this.chance = chance;
 	}
 
 	/**
@@ -395,9 +413,25 @@ class RandomPropagation {
 	}
 
 	/**
+	 * Main behaviour of this profile
+	 * @param  {cur_frac} cur_frac Uneeded for this profile
+	 */
+	mainBehaviour = function(cur_frac) {
+		this.propagateActive();
+
+		if (!this.rebound) {
+			if (grid.getAllActive().length < this.limit) {
+				if (Math.random() > 1 - this.chance) {
+					grid.setActiveRandomEdgeCube();
+				}
+			}
+		}
+	}
+
+	/**
 	 * Propagates active status to cubes based on propagation vector
 	 */
-	mainBehaviour = function() {
+	propagateActive = function() {
 		let activeCubes = this.getAllActive();
 
 		for (let activeCube of activeCubes) {
@@ -476,14 +510,30 @@ class RandomPropagation {
 }
 
 class Ripple {
-	constructor() {
+	constructor(amplitude, radius) {
+		this.amplitude = amplitude;
+		this.radius = radius;
+		this.time = 0;
 	}
 
 	initCubeProperties = function(cube) {
 
 	}
-	mainBehaviour = function() {
-		
+
+	mainBehaviour = function(cur_frac) {
+		let centerCube = this.cubes[ Math.floor(this.cubes.length/2) ][ Math.floor(this.cubes[0].length/2) ];
+		centerCube.raiseHeight = 0;
+
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let cube = this.cubes[col][row];
+				let range = this.cubeDistanceFromActive(cube, centerCube);
+
+				if (range <= this.radius) {
+					cube.raiseHeight = this.amplitude/(range+1) * Math.sin(map(cur_frac, 0, 1, 0, 360) * Math.PI/ 180 + range);
+				}
+			}
+		}
 	}
 }
 
@@ -550,24 +600,22 @@ const profile3 = {
 
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
-const BGC = [0, 0, 130];
+const BGC = [63, 157, 77, 62];
 let REBOUND = true;
 const CHANCE = 0.1;
 const LIMIT = 1;
 
-const cProfile1 = new CubeProfile(canvasHeight/20, 3, 120);
-const rProfile1 = new RenderProfile(true, [50, 50, 50], [255, 10, 128], cProfile1.edgeLength * 1.5);
+const cProfile1 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
+const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], cProfile1.edgeLength * 1.5);
 const sProfile1 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 13 / 2,
 	13,
 	13, 
 );
-const randomPropagation = new RandomPropagation( 
-	REBOUND, 1, cProfile1.edgeLength * 1.5, 6, 
-)
 
-const rProfile2 = new RenderProfile(true, [0, 120, 215], [255, 30, 10], cProfile1.edgeLength * 1.5);
+
+const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], cProfile1.edgeLength * 1.5);
 const sProfile2 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 11 / 2,
@@ -575,34 +623,33 @@ const sProfile2 = new StructureProfile(
 	11
 );
 
-const ripple = new Ripple(
-
+const randomPropagation = new RandomPropagation( 
+	REBOUND, 1, cProfile1.edgeLength * 1.5, 6, 3, 0.05
 );
 
+const ripple = new Ripple(
+	cProfile1.edgeLength * 3,
+	8
+);
 
 const grid = new OrthoGrid(
 	sProfile2, 
 	cProfile1,
 	rProfile2, 
-	randomPropagation
+	ripple
 );
 
-grid.setActiveRandomEdgeCube();
+// grid.setActiveRandomEdgeCube();
 
-function draw_one_frame() {
+function draw_one_frame(cur_frac) {
 	// noLoop();
 	background(BGC);
 
+
 	grid.draw();
 
-	grid.doBehaviour();
+	grid.doBehaviour(cur_frac);
 
 
-	// if (!REBOUND) {
-		// if (grid.getAllActive().length < LIMIT) {
-			// if (Math.random() > 1 - CHANCE) {
-				// grid.setActiveRandomEdgeCube();
-			// }
-		// }
-	// }
+
 }
