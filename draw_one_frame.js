@@ -40,18 +40,19 @@ class OrthoGrid {
 		 * Draws the cube
 		 * @param {number|Array} coldCol Colour that is shown 100% if the colour lerp returns 0
 		 * @param {number|Array} warmCol Colour that is shown 100% if the colour lerp returns 1
+		 * @param {number} lerpLowerBound Minimum bound for colour lerping
 		 * @param {number} lerpUpperBound Maximum bound for colour lerping
 		 * @param {boolean} dimensional Controls the render style 
 		 */
-		draw(coldCol, warmCol, lerpUpperBound, dimensional=false) {
+		draw(coldCol, warmCol, lerpLowerBound, lerpUpperBound, dimensional=false) {
 			push();
 			noStroke();
 			translate(this.points[0][0], this.points[0][1]);
 	
-			fill(this._heatMapColor(coldCol, warmCol, lerpUpperBound));
+			fill(this._heatMapColor(coldCol, warmCol, lerpLowerBound, lerpUpperBound));
 	
 			// Draws top rhombus
-			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1), this._colorBrightness(warmCol, 1), lerpUpperBound));
+			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1), this._colorBrightness(warmCol, 1), lerpLowerBound, lerpUpperBound));
 			beginShape();
 			vertex(0, - this.raiseHeight);                                   // A
 			vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -60,7 +61,7 @@ class OrthoGrid {
 			endShape(CLOSE);
 	
 			// Draws left rhombus
-			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 2/3), this._colorBrightness(warmCol, 2/3), lerpUpperBound));
+			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 2/3), this._colorBrightness(warmCol, 2/3), lerpLowerBound, lerpUpperBound));
 			beginShape();
 			vertex(0, - this.raiseHeight);                                   // A
 			vertex(this.points[1][0], this.points[1][1] - this.raiseHeight); // B
@@ -69,7 +70,7 @@ class OrthoGrid {
 			endShape(CLOSE);
 	
 			// Draws right rhombus
-			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1/3), this._colorBrightness(warmCol, 1/3), lerpUpperBound));
+			if (dimensional) fill(this._heatMapColor(this._colorBrightness(coldCol, 1/3), this._colorBrightness(warmCol, 1/3), lerpLowerBound, lerpUpperBound));
 			beginShape();
 			vertex(0, - this.raiseHeight);                                   // A
 			vertex(this.points[2][0], this.points[2][1] - this.raiseHeight); // C
@@ -84,13 +85,14 @@ class OrthoGrid {
 		 * Lerps between two given colours based on upper
 		 * @param {number|Array} col1 Colour that is shown 100% if the colour lerp returns 0
 		 * @param {number|Array} col2 Colour that is shown 100% if the colour lerp returns 1
+		 * @param {number} lerpLowerBound Minimum bound for colour lerping
 		 * @param {number} lerpUpperBound Maximum bound for colour lerping
 		 * @returns {Object} Returns a p5.Color object
 		 */
-		_heatMapColor(col1, col2, lerpUpperBound) {
+		_heatMapColor(col1, col2, lerpLowerBound, lerpUpperBound) {
 			push();
 			colorMode(RGB);
-			let heatCol = lerpColor(color(col1), color(col2), map(this.raiseHeight, 0, 1.25 * lerpUpperBound, 0, 1));
+			let heatCol = lerpColor(color(col1), color(col2), map(this.raiseHeight, lerpLowerBound, 1.1 * lerpUpperBound, 0, 1));
 			pop();
 	
 			return heatCol;
@@ -200,13 +202,19 @@ class OrthoGrid {
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				let cube = this.cubes[col][row];
-				cube.draw(this.coldCol, this.warmCol, this.lerpUpperBound, this.dimensional);
+				cube.draw(this.coldCol, this.warmCol, this.lerpLowerBound, this.lerpUpperBound, this.dimensional);
 			}
 		}
 	}
 
-	cubeDistanceFromActive = function(cube, activeCube) {
-		return Math.sqrt( Math.abs(cube.row - activeCube.row) ** 2 + Math.abs(cube.col - activeCube.col) ** 2 );
+	/**
+	 * Gets the distance from two cubes in grid space
+	 * @param {Object} cube1 Cube object
+	 * @param {Object} cube2 Cube object  
+	 * @returns {number} Floating point distance between the two cubes
+	 */
+	cubeDistanceFromActive = function(cube1, cube2) {
+		return Math.sqrt( Math.abs(cube1.row - cube2.row) ** 2 + Math.abs(cube1.col - cube2.col) ** 2 );
 	}
 
 	/**
@@ -264,6 +272,7 @@ class OrthoGrid {
 		this.dimensional = renderProfile.dimensional;       // Render either 3D or flat
 		this.coldCol = renderProfile.coldCol;               // Lower colour of lerpColor
 		this.warmCol = renderProfile.warmCol;               // Warmer colour of lerpColor
+		this.lerpLowerBound = renderProfile.lerpLowerBound; // Lower bound for lerp
 		this.lerpUpperBound = renderProfile.lerpUpperBound; // Upper bound for lerp
 
 		this.sendFeedback("render");
@@ -359,10 +368,11 @@ class CubeProfile {
 }
 
 class RenderProfile {
-	constructor(dimensional, coldCol, warmCol, lerpUpperBound) {
+	constructor(dimensional, coldCol, warmCol, lerpLowerBound, lerpUpperBound) {
 		this.dimensional = dimensional;
 		this.coldCol = coldCol;
 		this.warmCol = warmCol;
+		this.lerpLowerBound = lerpLowerBound;
 		this.lerpUpperBound = lerpUpperBound;
 	}
 }
@@ -524,9 +534,11 @@ class Ripple {
 		this.time = 0;
 	}
 
-	initCubeProperties = function(cube) {
-
-	}
+	/**
+	 * Properties to be added to OrthoCube (this method is empty but must exist for ducktyping to work)
+	 * @param {Object} cube Uneeded for this profile
+	 */
+	initCubeProperties = function(cube) {}
 
 	mainBehaviour = function(cur_frac) {
 		let centerCube = this.cubes[ Math.floor(this.cubes.length/2) ][ Math.floor(this.cubes[0].length/2) ];
@@ -613,7 +625,7 @@ const CHANCE = 0.1;
 const LIMIT = 1;
 
 const cProfile1 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
-const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], cProfile1.edgeLength * 1.5);
+const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], 0, cProfile1.edgeLength * 1.5);
 const sProfile1 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 13 / 2,
@@ -621,8 +633,7 @@ const sProfile1 = new StructureProfile(
 	13, 
 );
 
-
-const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], cProfile1.edgeLength * 1.5);
+const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], -cProfile1.edgeLength * 1.5, cProfile1.edgeLength * 1.5);
 const sProfile2 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 11 / 2,
