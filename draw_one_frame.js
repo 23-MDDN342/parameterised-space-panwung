@@ -576,10 +576,30 @@ class GameOfLife {
 	initCubeProperties = function(cube) {}
 
 	mainBehaviour = function(cur_frac) {
+
+		// let futureArray = [];
+		// for (let col=0; col<this.cubes.length; col++) {
+		// 	futureArray[col] = new Array(this.cubes[0].length).fill(0);
+		// }
+	
+		/**
+		 * how to fix:
+		 * make new array same size as 
+		 * 
+		 */
+
+		let currentState = new Map();
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				let cube = this.cubes[col][row];
-				this._applyRules(cube);
+				currentState.set(cube, cube.active);
+			}
+		}
+
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let cube = this.cubes[col][row];
+				this._applyRules(cube, currentState);
 				cube.raiseHeight = (cube.active) ? this.maxRaiseHeight : 0;
 			}
 		}
@@ -596,8 +616,8 @@ class GameOfLife {
 		}
 	}
 
-	_applyRules = function(cube) {
-		let aliveCount = this._countNeighbours(cube);
+	_applyRules = function(cube, currentState) {
+		let aliveCount = this._countNeighbours(cube, currentState);
 		if (cube.active) {
 			if (aliveCount < 2) cube.active = false;
 			else if (aliveCount === 2 || aliveCount === 3) cube.active = true;
@@ -608,7 +628,7 @@ class GameOfLife {
 		}
 	} 
 
-	_countNeighbours = function(cube) {
+	_countNeighbours = function(cube, currentState) {
 		let aliveCount = 0;
 		for (let j=-1; j<=1; j++) {
 			for (let i=-1; i<=1; i++) {
@@ -617,7 +637,8 @@ class GameOfLife {
 					cube.col + j >= 0 && cube.col + j < this.cubes.length &&
 					!(j === 0 && i === 0)
 				) {
-					if (grid.cubes[cube.col + j][cube.row + i].active) aliveCount++;
+					let adjacent = this.cubes[cube.col + j][cube.row + i];
+					if (currentState.get(adjacent)) aliveCount++;
 				}
 			}
 		}
