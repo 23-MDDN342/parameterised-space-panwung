@@ -745,7 +745,7 @@ const grid = new OrthoGrid(
 	gof
 );
 
-grid.setRandomActive(10, 0.15);
+grid.setRandomActive(30, 0.15);
 const BGC = [63, 157, 77, 62];
 
 function draw_one_frame(cur_frac) {
