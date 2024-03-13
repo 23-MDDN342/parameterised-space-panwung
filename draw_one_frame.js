@@ -723,9 +723,9 @@ const sProfile2 = new StructureProfile(
 );
 const sProfile3 = new StructureProfile(
 	canvasWidth/2, 
-	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 18 / 2,
-	18,
-	18
+	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 16 / 2,
+	16,
+	16
 )
 
 // Behaviour profiles
@@ -745,8 +745,8 @@ const grid = new OrthoGrid(
 	gof
 );
 
-grid.setRandomActive(30, 0.15);
-const BGC = [63, 157, 77, 62];
+grid.setRandomActive(70, 0.3);
+const BGC = 30;// rP2[63, 157, 77, 62];
 
 function draw_one_frame(cur_frac) {
 	background(BGC);
