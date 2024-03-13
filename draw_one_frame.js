@@ -576,18 +576,6 @@ class GameOfLife {
 	initCubeProperties = function(cube) {}
 
 	mainBehaviour = function(cur_frac) {
-
-		// let futureArray = [];
-		// for (let col=0; col<this.cubes.length; col++) {
-		// 	futureArray[col] = new Array(this.cubes[0].length).fill(0);
-		// }
-	
-		/**
-		 * how to fix:
-		 * make new array same size as 
-		 * 
-		 */
-
 		let currentState = new Map();
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
