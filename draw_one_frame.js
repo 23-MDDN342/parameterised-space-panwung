@@ -174,6 +174,8 @@ class OrthoGrid {
 	 * @param {Object} behaviourProfile Object containing the behaviour of the cubes
 	 */
 	constructor(structureProfile, cubeProfile, renderProfile, behaviourProfile) {
+		this.consoleFeedback = true; // For debugging
+
 		this.loadStructureProfile(structureProfile);
 		this.loadCubeProfile(cubeProfile);
 		this.loadRenderProfile(renderProfile);
@@ -239,8 +241,7 @@ class OrthoGrid {
 		this.maxRow = structureProfile.maxRow;              // Max row of grid
 		this.maxCol = structureProfile.maxCol;              // Max column of grid
 
-		console.log("Loaded new structure profile");
-		console.log("Rebuilding may be required (use build)");
+		this.sendFeedback("structure");
 	}
 
 	/**
@@ -252,8 +253,7 @@ class OrthoGrid {
 		this.separation = cubeProfile.separation;           // Separation between cubes
 		this.viewAngleDeg = cubeProfile.viewAngleDeg;       // View angle of cube
 
-		console.log("Loaded new cube profile");
-		console.log("Rebuilding may be required (use build)");
+		this.sendFeedback("cube");
 	}
 
 	/**
@@ -266,8 +266,7 @@ class OrthoGrid {
 		this.warmCol = renderProfile.warmCol;               // Warmer colour of lerpColor
 		this.lerpUpperBound = renderProfile.lerpUpperBound; // Upper bound for lerp
 
-		console.log("Loaded new render profile");
-		console.log("Rebuilding may be required (use build)");
+		this.sendFeedback("render");
 	}
 
 	/**
@@ -293,8 +292,7 @@ class OrthoGrid {
 			}
 		}
 
-		console.log("Loaded new structure profile");
-		console.log("Rebuilding may be required (use build)");
+		this.sendFeedback("behaviour");
 	}
 
 	/**
@@ -329,7 +327,17 @@ class OrthoGrid {
 			y += translationY;
 		}
 
-		console.log("Grid built");
+		this.sendFeedback("build")
+	}
+
+	sendFeedback(source) {
+		if (this.consoleFeedback) {
+			if (source === "build") console.log("Grid built");
+			else {
+				console.log("Loaded new " + source + " profile");
+				console.log("Rebuilding may be required (use build method)");
+			}
+		}
 	}
 }
 
@@ -601,7 +609,6 @@ const profile3 = {
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
 const BGC = [63, 157, 77, 62];
-let REBOUND = true;
 const CHANCE = 0.1;
 const LIMIT = 1;
 
@@ -624,7 +631,7 @@ const sProfile2 = new StructureProfile(
 );
 
 const randomPropagation = new RandomPropagation( 
-	REBOUND, 1, cProfile1.edgeLength * 1.5, 6, 3, 0.05
+	false, 1, cProfile1.edgeLength * 1.5, 6, 3, 0.05
 );
 
 const ripple = new Ripple(
