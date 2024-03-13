@@ -196,6 +196,13 @@ class OrthoGrid {
 	}
 
 	/**
+	 * Does the main behaviour
+	 */
+	doBehaviour(cur_frac) {
+		this.mainBehaviour(cur_frac);
+	}
+	
+	/**
 	 * Draws all the cubes
 	 */
 	draw() {
@@ -230,13 +237,6 @@ class OrthoGrid {
 			}
 		}
 		return activeCubes;
-	}
-
-	/**
-	 * Does the main behaviour
-	 */
-	doBehaviour(cur_frac) {
-		this.mainBehaviour(cur_frac);
 	}
 
 	/**
@@ -431,25 +431,34 @@ class RandomPropagation {
 	}
 
 	/**
-	 * Main behaviour of this profile
+	 * Main behaviour of profile
 	 * @param  {cur_frac} cur_frac Uneeded for this profile
 	 */
 	mainBehaviour = function(cur_frac) {
-		this.propagateActive();
+		this._propagateActive();
 
 		if (!this.rebound) {
 			if (grid.getAllActive().length < this.limit) {
 				if (Math.random() > 1 - this.chance) {
-					grid.setActiveRandomEdgeCube();
+					grid.setRandomEdgeCubeActive();
 				}
 			}
 		}
 	}
 
 	/**
+	 * Sets the height of each cube based on distance from active cubes
+	 */
+	setRandomEdgeCubeActive = function() {
+		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
+		edgeCube.active = true;
+		edgeCube.step = 0;
+	}
+
+	/**
 	 * Propagates active status to cubes based on propagation vector
 	 */
-	propagateActive = function() {
+	_propagateActive = function() {
 		let activeCubes = this.getAllActive();
 
 		for (let activeCube of activeCubes) {
@@ -488,14 +497,8 @@ class RandomPropagation {
 	}
 
 	/**
-	 * Sets the height of each cube based on distance from active cubes
+	 * Sets the height of cubes adjacent to active cubes
 	 */
-	setActiveRandomEdgeCube = function() {
-		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
-		edgeCube.active = true;
-		edgeCube.step = 0;
-	}
-
 	_raiseAdjacentCubes = function() {
 		// Degeneration factor if a cube is not being influenced
 		const DEGENERATION = 0.85; 
@@ -540,6 +543,10 @@ class Ripple {
 	 */
 	initCubeProperties = function(cube) {}
 
+	/**
+	 * Main behaviour of profile
+	 * @param {number} cur_frac Number that goes from 0 to 1
+	 */
 	mainBehaviour = function(cur_frac) {
 		let centerCube = this.cubes[ Math.floor(this.cubes.length/2) ][ Math.floor(this.cubes[0].length/2) ];
 		centerCube.raiseHeight = 0;
@@ -557,21 +564,71 @@ class Ripple {
 	}
 }
 
+class GameOfLife {
+	constructor(maxRaiseHeight) {
+		this.maxRaiseHeight = maxRaiseHeight;
+	}
+	
+	/**
+	 * Properties to be added to OrthoCube (this method is empty but must exist for ducktyping to work)
+	 * @param {Object} cube Uneeded for this profile
+	 */
+	initCubeProperties = function(cube) {}
+
+	mainBehaviour = function(cur_frac) {
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				let cube = this.cubes[col][row];
+				this._applyRules(cube);
+				cube.raiseHeight = (cube.active) ? this.maxRaiseHeight : 0;
+			}
+		}
+	}
+
+	setRandomActive = function(limit, chance) {
+		let count = 0;
+		for (let col=0; col<this.cubes.length; col++) {
+			for (let row=0; row<this.cubes[0].length; row++) {
+				if (count < limit) {
+					if (Math.random() > 1 - chance) this.cubes[col][row].active = true;
+				}
+			}
+		}
+	}
+
+	_applyRules = function(cube) {
+		let aliveCount = this._countNeighbours(cube);
+		if (cube.active) {
+			if (aliveCount < 2) cube.active = false;
+			else if (aliveCount === 2 || aliveCount === 3) cube.active = true;
+			else if (aliveCount > 3) cube.active = false;
+		}
+		else {
+			if (aliveCount === 3) cube.active = true;
+		}
+	} 
+
+	_countNeighbours = function(cube) {
+		let aliveCount = 0;
+		for (let j=-1; j<=1; j++) {
+			for (let i=-1; i<=1; i++) {
+				if (
+					cube.row + i >= 0 && cube.row + i < this.cubes[0].length &&
+					cube.col + j >= 0 && cube.col + j < this.cubes.length &&
+					!(j === 0 && i === 0)
+				) {
+					if (grid.cubes[cube.col + j][cube.row + i].active) aliveCount++;
+				}
+			}
+		}
+		return aliveCount;
+	}
+}
+
 /**
- * AN INTERESTING THOUGHT:
- * each profile object can have a method which will have a different effect
- * this special method will be called somewhere, probably propagateActiveCubes(...)
- * this method could be something like a different propagation function, or something else
- * maybe like instead of propagating it ripples?
- * 
- * make a separate method that will be called in draw_one_frame() called behaviour(),
- * this will store what effect the cubes will have.
- * if none is provided, use propagateActiveCubes(...)
- * 
  * TODO:
  * noise- make the spawning predictable
  * offset- make cubes offset spawning
- * behaviour- make cubes have different behavour
  */
 
 
@@ -620,54 +677,59 @@ const profile3 = {
 
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
-const BGC = [63, 157, 77, 62];
-const CHANCE = 0.1;
-const LIMIT = 1;
 
+
+// Cube profiles
 const cProfile1 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
+
+// Render profiles
 const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], 0, cProfile1.edgeLength * 1.5);
+const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], -cProfile1.edgeLength * 1.5, cProfile1.edgeLength * 1.5);
+const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cProfile1.edgeLength * 1);
+
+// Structure profiles
 const sProfile1 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 13 / 2,
 	13,
 	13, 
 );
-
-const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], -cProfile1.edgeLength * 1.5, cProfile1.edgeLength * 1.5);
 const sProfile2 = new StructureProfile(
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 11 / 2,
 	11,
 	11
 );
+const sProfile3 = new StructureProfile(
+	canvasWidth/2, 
+	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 18 / 2,
+	18,
+	18
+)
 
+// Behaviour profiles
 const randomPropagation = new RandomPropagation( 
 	false, 1, cProfile1.edgeLength * 1.5, 6, 3, 0.05
 );
-
 const ripple = new Ripple(
-	cProfile1.edgeLength * 3,
-	8
+	cProfile1.edgeLength * 3, 8
 );
+const gof = new GameOfLife(cProfile1.edgeLength * 0.9);
 
+// Grid
 const grid = new OrthoGrid(
-	sProfile2, 
+	sProfile3, 
 	cProfile1,
-	rProfile2, 
-	ripple
+	rProfile3, 
+	gof
 );
 
-// grid.setActiveRandomEdgeCube();
+grid.setRandomActive(30, 0.15);
+const BGC = [63, 157, 77, 62];
 
 function draw_one_frame(cur_frac) {
-	// noLoop();
 	background(BGC);
-
-
 	grid.draw();
-
 	grid.doBehaviour(cur_frac);
-
-
-
+	// noLoop();
 }
