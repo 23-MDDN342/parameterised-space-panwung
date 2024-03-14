@@ -440,16 +440,16 @@ class RandomPropagation {
 		if (!this.rebound) {
 			if (grid.getAllActive().length < this.limit) {
 				if (Math.random() > 1 - this.chance) {
-					grid.setRandomEdgeCubeActive();
+					grid.setRandomActive();
 				}
 			}
 		}
 	}
 
 	/**
-	 * Sets the height of each cube based on distance from active cubes
+	 * Randomly selects an edge cube to be active which begins propagation
 	 */
-	setRandomEdgeCubeActive = function() {
+	setRandomActive = function() {
 		let edgeCube = this.edgeCubes[Math.floor(Math.random() * this.edgeCubes.length)];
 		edgeCube.active = true;
 		edgeCube.step = 0;
@@ -562,6 +562,8 @@ class Ripple {
 			}
 		}
 	}
+
+	setRandomActive = function() {}
 }
 
 class GameOfLife {
@@ -638,51 +640,9 @@ class GameOfLife {
  * TODO:
  * noise- make the spawning predictable
  * offset- make cubes offset spawning
+ * will need to change the ripple method so that it can pick any point aside from the centre
  */
 
-
-/*
-const profile1 = {
-	rowCount : 13,
-	colCount : 13, 
-
-	angle : 120,
-	edgeLength : canvasHeight/20,
-	separation : 3, // make this number scale
-	maxRaiseRadius : 6,
-
-	dimensional : false,
-	coldCol : [50, 50, 50],
-	warmCol : [255, 10, 128],
-}
-
-const profile2 = {
-	rowCount : 24,
-	colCount : 24, 
-
-	angle : 120,
-	edgeLength : canvasHeight/30,
-	separation : 3, // make this number scale
-	maxRaiseRadius : 12,
-
-	dimensional : false,
-	coldCol : [0, 120, 215],
-	warmCol : [255, 30, 10],
-}
-
-const profile3 = {
-	rowCount : 32,
-	colCount : 32, 
-
-	angle : 120,
-	edgeLength : canvasHeight/12,
-	separation : 3, // make this number scale
-	maxRaiseRadius : 6,
-
-	dimensional : true,
-	coldCol : 35,
-	warmCol : 200,
-}*/
 
 //y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
 
@@ -692,48 +652,51 @@ const profile3 = {
 const cProfile1 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
 
 // Render profiles
-const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], 0, cProfile1.edgeLength * 1.5);
-const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], -cProfile1.edgeLength * 1.5, cProfile1.edgeLength * 1.5);
-const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cProfile1.edgeLength * 1);
+const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], 0, cProfile1.edgeLength * 1.5); // propagation
+const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], -cProfile1.edgeLength * 1.5, cProfile1.edgeLength * 1.5); // ripple
+const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cProfile1.edgeLength * 1); // gof
+const rProfile4 = new RenderProfile(false, [255, 180, 74], [255, 255, 255], -30, cProfile1.edgeLength * 1); // ripple
 
 // Structure profiles
-const sProfile1 = new StructureProfile(
+const sProfile1 = new StructureProfile( // propagation
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 13 / 2,
 	13,
 	13, 
 );
-const sProfile2 = new StructureProfile(
+const sProfile2 = new StructureProfile( // ripple
 	canvasWidth/2, 
-	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 11 / 2,
-	11,
-	11
+	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 15 / 2,
+	15,
+	15
 );
-const sProfile3 = new StructureProfile(
+const sProfile3 = new StructureProfile( // gof
 	canvasWidth/2, 
 	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 16 / 2,
 	16,
 	16
-)
+);
 
 // Behaviour profiles
 const randomPropagation = new RandomPropagation( 
 	false, 1, cProfile1.edgeLength * 1.5, 6, 3, 0.05
 );
 const ripple = new Ripple(
-	cProfile1.edgeLength * 3, 8
+	cProfile1.edgeLength * 3, 12
 );
 const gof = new GameOfLife(cProfile1.edgeLength * 0.9);
 
 // Grid
 const grid = new OrthoGrid(
-	sProfile3, 
+	sProfile2, 
 	cProfile1,
-	rProfile3, 
-	gof
+	rProfile4, 
+	ripple
 );
 
 grid.setRandomActive(70, 0.3);
+
+
 const BGC = 30;// rP2[63, 157, 77, 62];
 
 function draw_one_frame(cur_frac) {
