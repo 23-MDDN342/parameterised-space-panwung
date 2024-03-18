@@ -201,6 +201,16 @@ class OrthoGrid {
 	doBehaviour(cur_frac) {
 		this.mainBehaviour(cur_frac);
 	}
+
+	/**
+	 * Sets a chosen cube to be active
+	 * @param {number} row Row of cube
+	 * @param {number} col Column of cube
+	 * @param {boolean} active Active status of cube if not undefined, otherwise it will toggle the cube's current status
+	 */
+	setActive(row, col, active=undefined) {
+		this.cubes[col][row].active = (active == undefined) ? !this.cubes[col][row].active : active;
+	}
 	
 	/**
 	 * Draws all the cubes
@@ -747,7 +757,6 @@ class GameOfLife {
 
 // Cube profiles
 const cProfile1 = new CubeProfile(canvasHeight/22, canvasHeight * 0.01, 120);
-const cProfile2 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
 
 // Render profiles
 const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], 0, cProfile1.edgeLength * 1.5); // propagation
@@ -801,7 +810,7 @@ if (grid.behaviour === "ripple") {
 	grid.cubes[11][7].active = true;
 }
 
-
+// Background colour
 const BGC = 30;
 
 function draw_one_frame(cur_frac) {
