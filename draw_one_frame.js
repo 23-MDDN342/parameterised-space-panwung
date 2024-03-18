@@ -759,10 +759,9 @@ class GameOfLife {
 const cProfile1 = new CubeProfile(canvasHeight/22, canvasHeight * 0.01, 120);
 
 // Render profiles
-const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], 0, cProfile1.edgeLength * 1.5); // propagation
-const rProfile2 = new RenderProfile(false, [251, 189, 204], [170, 8, 47], -cProfile1.edgeLength * 1.5, cProfile1.edgeLength * 1.5); // ripple
+const rProfile1 = new RenderProfile(false, [0, 0, 255], [255, 0, 0], 0, cProfile1.edgeLength * 1.5); // propagation
+const rProfile2 = new RenderProfile(false, [255, 180, 74], [255, 255, 255], -30, cProfile1.edgeLength * 1); // ripple
 const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cProfile1.edgeLength * 1); // gof
-const rProfile4 = new RenderProfile(false, [255, 180, 74], [255, 255, 255], -30, cProfile1.edgeLength * 1); // ripple
 
 // Structure profiles
 const sProfile1 = new StructureProfile( // propagation
@@ -797,7 +796,7 @@ const gof = new GameOfLife(cProfile1.edgeLength * 0.9);
 const grid = new OrthoGrid(
 	sProfile2, 
 	cProfile1,
-	rProfile4, 
+	rProfile2, 
 	ripple
 );
 
