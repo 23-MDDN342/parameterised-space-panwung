@@ -243,32 +243,34 @@ class OrthoGrid {
 	 * Loads date from structureProfile objects to OrthoGrid properties
 	 * @param {Object} structureProfile Uses this object to set property values
 	 */
-	loadStructureProfile(structureProfile) {
+	loadStructureProfile(structureProfile, autobuild=false) {
 		this.x = structureProfile.x;                        // x coord of top cube
 		this.y = structureProfile.y;                        // y coord of top cube 
 		this.maxRow = structureProfile.maxRow;              // Max row of grid
 		this.maxCol = structureProfile.maxCol;              // Max column of grid
 
 		this.sendFeedback("structure");
+		if (autobuild) this.build();
 	}
 
 	/**
 	 * Loads date from cubeProfile objects to OrthoGrid properties
 	 * @param {Object} cubeProfile Uses this object to set property values
 	 */
-	loadCubeProfile(cubeProfile) {
+	loadCubeProfile(cubeProfile, autobuild=false) {
 		this.edgeLength = cubeProfile.edgeLength;           // Edge length of cube
 		this.separation = cubeProfile.separation;           // Separation between cubes
 		this.viewAngleDeg = cubeProfile.viewAngleDeg;       // View angle of cube
 
 		this.sendFeedback("cube");
+		if (autobuild) this.build();
 	}
 
 	/**
 	 * Loads date from renderProfile objects to OrthoGrid properties
 	 * @param {Object} renderProfile Uses this object to set property values
 	 */
-	loadRenderProfile(renderProfile) {
+	loadRenderProfile(renderProfile, autobuild=false) {
 		this.dimensional = renderProfile.dimensional;       // Render either 3D or flat
 		this.coldCol = renderProfile.coldCol;               // Lower colour of lerpColor
 		this.warmCol = renderProfile.warmCol;               // Warmer colour of lerpColor
@@ -276,13 +278,14 @@ class OrthoGrid {
 		this.lerpUpperBound = renderProfile.lerpUpperBound; // Upper bound for lerp
 
 		this.sendFeedback("render");
+		if (autobuild) this.build();
 	}
 
 	/**
 	 * Loads date from behaviourProfile objects to OrthoGrid properties
 	 * @param {Object} behaviourProfile Uses this object to set property values and destroy old ones
 	 */
-	loadBehaviourProfile(behaviourProfile) {
+	loadBehaviourProfile(behaviourProfile, autobuild=false) {
 		// Purge old
 		for (let property of this.addedBehaviouralProperties) { delete this[property]; }
 		this.addedBehaviouralProperties = [];
@@ -302,6 +305,7 @@ class OrthoGrid {
 		}
 
 		this.sendFeedback("behaviour");
+		if (autobuild) this.build();
 	}
 
 	/**
@@ -397,6 +401,8 @@ class RandomPropagation {
 
 		this.limit = limit;
 		this.chance = chance;
+
+		this.behaviour = "Random Propagation";
 	}
 
 	/**
@@ -535,6 +541,8 @@ class Ripple {
 		this.amplitude = amplitude;
 		this.radius = radius;
 		this.time = 0;
+
+		this.behaviour = "Ripple";
 	}
 
 	/**
@@ -548,27 +556,43 @@ class Ripple {
 	 * @param {number} cur_frac Number that goes from 0 to 1
 	 */
 	mainBehaviour = function(cur_frac) {
-		let centerCube = this.cubes[ Math.floor(this.cubes.length/2) ][ Math.floor(this.cubes[0].length/2) ];
-		centerCube.raiseHeight = 0;
+		// Degeneration factor if a cube is not being influenced
+		const DEGENERATION = 0.85; 
+
+		let activeCubes = this.getAllActive();
 
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
+				let count = 0; // How many active cubes have influenced this cube
+				let newRaiseHeight = 0; // New raise height of the cube
 				let cube = this.cubes[col][row];
-				let range = this.cubeDistanceFromActive(cube, centerCube);
 
-				if (range <= this.radius) {
-					cube.raiseHeight = this.amplitude/(range+1) * Math.sin(map(cur_frac, 0, 1, 0, 360) * Math.PI/ 180 + range);
+				for (let activeCube of activeCubes) {
+					let range = this.cubeDistanceFromActive(cube, activeCube); // Get the distance from this cube to some active cube
+					
+					// If the cube is within range, increase its new height based on its distance from that active cube
+					if (range <= this.radius) {
+						newRaiseHeight += this.amplitude/(range+1) * Math.sin(map(cur_frac, 0, 1, 0, 360) * Math.PI/ 180 + range);
+						count++;
+					}
 				}
+
+				// If the cube has been affected by an active cube, change its raise height. Otherwise, degenerate its height gradually
+				cube.raiseHeight = (count > 0) ? newRaiseHeight : cube.raiseHeight * DEGENERATION;
 			}
 		}
 	}
 
-	setRandomActive = function() {}
+	setRandomActive = function() {
+		this.cubes[ Math.floor(this.cubes.length * Math.random()) ][ Math.floor(this.cubes[0].length * Math.random()) ].active = true;
+	}
 }
 
 class GameOfLife {
 	constructor(maxRaiseHeight) {
 		this.maxRaiseHeight = maxRaiseHeight;
+
+		this.behaviour = "Game Of Life";
 	}
 	
 	/**
@@ -636,18 +660,6 @@ class GameOfLife {
 	}
 }
 
-/**
- * TODO:
- * noise- make the spawning predictable
- * offset- make cubes offset spawning
- * will need to change the ripple method so that it can pick any point aside from the centre
- */
-
-
-//y = canvasHeight/2 + 2 * (profile.edgeLength + profile.separation) * Math.cos( profile.angle / 2 ) * profile.colCount / 4
-
-
-
 // Cube profiles
 const cProfile1 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
 
@@ -682,7 +694,7 @@ const randomPropagation = new RandomPropagation(
 	false, 1, cProfile1.edgeLength * 1.5, 6, 3, 0.05
 );
 const ripple = new Ripple(
-	cProfile1.edgeLength * 3, 12
+	cProfile1.edgeLength * 3, 19
 );
 const gof = new GameOfLife(cProfile1.edgeLength * 0.9);
 
@@ -695,7 +707,6 @@ const grid = new OrthoGrid(
 );
 
 grid.setRandomActive(70, 0.3);
-
 
 const BGC = 30;// rP2[63, 157, 77, 62];
 
