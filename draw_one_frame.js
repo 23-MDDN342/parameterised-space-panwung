@@ -38,11 +38,11 @@ class OrthoGrid {
 	
 		/**
 		 * Draws the cube
-		 * @param {number|Array} coldCol Colour that is shown 100% if the colour lerp returns 0
-		 * @param {number|Array} warmCol Colour that is shown 100% if the colour lerp returns 1
+		 * @param {number|Array<number>} coldCol Colour that is shown 100% if the colour lerp returns 0
+		 * @param {number|Array<number>} warmCol Colour that is shown 100% if the colour lerp returns 1
 		 * @param {number} lerpLowerBound Minimum bound for colour lerping
 		 * @param {number} lerpUpperBound Maximum bound for colour lerping
-		 * @param {boolean} dimensional Controls the render style 
+		 * @param {boolean} dimensional Controls whether the cube renders as dimensional or flat
 		 */
 		draw(coldCol, warmCol, lerpLowerBound, lerpUpperBound, dimensional=false) {
 			push();
@@ -83,11 +83,11 @@ class OrthoGrid {
 	
 		/**
 		 * Lerps between two given colours based on upper
-		 * @param {number|Array} col1 Colour that is shown 100% if the colour lerp returns 0
-		 * @param {number|Array} col2 Colour that is shown 100% if the colour lerp returns 1
+		 * @param {number|Array<number>} col1 Colour that is shown 100% if the colour lerp returns 0
+		 * @param {number|Array<number>} col2 Colour that is shown 100% if the colour lerp returns 1
 		 * @param {number} lerpLowerBound Minimum bound for colour lerping
 		 * @param {number} lerpUpperBound Maximum bound for colour lerping
-		 * @returns {Object} Returns a p5.Color object
+		 * @returns {p5.Color} Returns a p5.Color object
 		 */
 		_heatMapColor(col1, col2, lerpLowerBound, lerpUpperBound) {
 			push();
@@ -100,9 +100,9 @@ class OrthoGrid {
 	
 		/**
 		 * Scales all the values in array or single number by some percent
-		 * @param {number|Array} cubeColor Colour to be rescaled
+		 * @param {number|Array<number>} cubeColor Colour to be rescaled
 		 * @param {number} percentage Percent to scale by
-		 * @returns {number|Array} Returns either a number or an array based on what datatype the colour is
+		 * @returns {number|Array<number>} Returns either a number or an array based on what datatype the colour is
 		 */
 		_colorBrightness(cubeColor, percentage) {
 			if (typeof cubeColor === "number") return cubeColor * percentage;
@@ -170,9 +170,9 @@ class OrthoGrid {
 
 	/**
 	 * Constructor of OrthoGrid
-	 * @param {Object} structureProfile Object containing the x and y coords, the max rows and columns
-	 * @param {Object} cubeProfile Object containing the cubes edge length, separation from one another, and the view angle (in degrees)
-	 * @param {Object} renderProfile Object containing the drawing style and colours of the cubes, as well as the upper lerp bound
+	 * @param {StructureProfile} structureProfile Object containing the x and y coords, the max rows and columns
+	 * @param {CubeProfile} cubeProfile Object containing the cubes edge length, separation from one another, and the view angle (in degrees)
+	 * @param {RenderProfile} renderProfile Object containing the drawing style and colours of the cubes, as well as the upper lerp bound
 	 * @param {Object} behaviourProfile Object containing the behaviour of the cubes
 	 */
 	constructor(structureProfile, cubeProfile, renderProfile, behaviourProfile) {
@@ -216,8 +216,8 @@ class OrthoGrid {
 
 	/**
 	 * Gets the distance from two cubes in grid space
-	 * @param {Object} cube1 Cube object
-	 * @param {Object} cube2 Cube object  
+	 * @param {OrthoCube} cube1 OrthoCube Cube
+	 * @param {OrthoCube} cube2 OrthoCube Cube  
 	 * @returns {number} Floating point distance between the two cubes
 	 */
 	cubeDistanceFromActive = function(cube1, cube2) {
@@ -226,7 +226,7 @@ class OrthoGrid {
 
 	/**
 	 * Returns an array of all the current active cubes
-	 * @returns {Array} Array of all active cubes
+	 * @returns {Array<OrthoCube>} Array of all active cubes
 	 */
 	getAllActive() {
 		let activeCubes = [];
@@ -241,36 +241,39 @@ class OrthoGrid {
 
 	/**
 	 * Loads date from structureProfile objects to OrthoGrid properties
-	 * @param {Object} structureProfile Uses this object to set property values
+	 * @param {StructureProfile} structureProfile Uses this object to set property values
+	 * @param {boolean} rebuild Rebuild the grid immediatly
 	 */
-	loadStructureProfile(structureProfile, autobuild=false) {
+	loadStructureProfile(structureProfile, rebuild=false) {
 		this.x = structureProfile.x;                        // x coord of top cube
 		this.y = structureProfile.y;                        // y coord of top cube 
 		this.maxRow = structureProfile.maxRow;              // Max row of grid
 		this.maxCol = structureProfile.maxCol;              // Max column of grid
 
 		this.sendFeedback("structure");
-		if (autobuild) this.build();
+		if (rebuild) this.build();
 	}
 
 	/**
 	 * Loads date from cubeProfile objects to OrthoGrid properties
-	 * @param {Object} cubeProfile Uses this object to set property values
+	 * @param {CubeProfile} cubeProfile Uses this object to set property values
+	 * @param {boolean} rebuild Rebuild the grid immediatly
 	 */
-	loadCubeProfile(cubeProfile, autobuild=false) {
+	loadCubeProfile(cubeProfile, rebuild=false) {
 		this.edgeLength = cubeProfile.edgeLength;           // Edge length of cube
 		this.separation = cubeProfile.separation;           // Separation between cubes
 		this.viewAngleDeg = cubeProfile.viewAngleDeg;       // View angle of cube
 
 		this.sendFeedback("cube");
-		if (autobuild) this.build();
+		if (rebuild) this.build();
 	}
 
 	/**
 	 * Loads date from renderProfile objects to OrthoGrid properties
-	 * @param {Object} renderProfile Uses this object to set property values
+	 * @param {RenderProfile} renderProfile Uses this object to set property values
+	 * @param {boolean} rebuild Rebuild the grid immediatly
 	 */
-	loadRenderProfile(renderProfile, autobuild=false) {
+	loadRenderProfile(renderProfile, rebuild=false) {
 		this.dimensional = renderProfile.dimensional;       // Render either 3D or flat
 		this.coldCol = renderProfile.coldCol;               // Lower colour of lerpColor
 		this.warmCol = renderProfile.warmCol;               // Warmer colour of lerpColor
@@ -278,14 +281,15 @@ class OrthoGrid {
 		this.lerpUpperBound = renderProfile.lerpUpperBound; // Upper bound for lerp
 
 		this.sendFeedback("render");
-		if (autobuild) this.build();
+		if (rebuild) this.build();
 	}
 
 	/**
 	 * Loads date from behaviourProfile objects to OrthoGrid properties
 	 * @param {Object} behaviourProfile Uses this object to set property values and destroy old ones
+	 * @param {boolean} rebuild Rebuild the grid immediatly
 	 */
-	loadBehaviourProfile(behaviourProfile, autobuild=false) {
+	loadBehaviourProfile(behaviourProfile, rebuild=false) {
 		// Purge old
 		for (let property of this.addedBehaviouralProperties) { delete this[property]; }
 		this.addedBehaviouralProperties = [];
@@ -305,7 +309,7 @@ class OrthoGrid {
 		}
 
 		this.sendFeedback("behaviour");
-		if (autobuild) this.build();
+		if (rebuild) this.build();
 	}
 
 	/**
@@ -343,6 +347,10 @@ class OrthoGrid {
 		this.sendFeedback("build")
 	}
 
+	/**
+	 * Sends debug info to console when loading profiles
+	 * @param {string} source What aspect is being loaded
+	 */
 	sendFeedback(source) {
 		if (this.consoleFeedback) {
 			if (source === "build") console.log("Grid built");
@@ -354,7 +362,17 @@ class OrthoGrid {
 	}
 }
 
+/**
+ * Stores structure information that will be loaded into Orthogrid
+ */
 class StructureProfile {
+	/**
+	 * Constructor
+	 * @param {number} x x coordinate of top cube
+	 * @param {number} y y coordinate of top cube
+	 * @param {number} maxRow Maximum number of rows in grid
+	 * @param {number} maxCol Maximum number of columns in grid
+	 */
 	constructor(x, y, maxRow, maxCol) {
 		this.x = x;
 		this.y = y;
@@ -363,7 +381,16 @@ class StructureProfile {
 	}
 }
 
+/**
+ * Stores cube information that will be loaded into Orthogrid
+ */
 class CubeProfile {
+	/**
+	 * Constructor
+	 * @param {number} edgeLength Length of each cubes edge
+	 * @param {number} separation Separation between each cube
+	 * @param {number} viewAngleDeg Angle the cubes will be viewed from in degrees
+	 */
 	constructor(edgeLength, separation, viewAngleDeg) {
 		this.edgeLength = edgeLength;
 		this.separation = separation;
@@ -371,7 +398,18 @@ class CubeProfile {
 	}
 }
 
+/**
+ * Stores render information that will be loaded into Orthogrid
+ */
 class RenderProfile {
+	/**
+	 * Constructor
+	 * @param {boolean} dimensional Controls whether the cube renders as dimensional or flat
+	 * @param {number|Array<number>} coldCol Colour that is shown 100% if the colour lerp returns 0
+	 * @param {number|Array<number>} warmCol Colour that is shown 100% if the colour lerp returns 1
+	 * @param {number} lerpLowerBound Minimum bound for colour lerping
+	 * @param {number} lerpUpperBound Maximum bound for colour lerping
+	 */
 	constructor(dimensional, coldCol, warmCol, lerpLowerBound, lerpUpperBound) {
 		this.dimensional = dimensional;
 		this.coldCol = coldCol;
@@ -381,13 +419,16 @@ class RenderProfile {
 	}
 }
 
+/**
+ * Behaviour profile of propagating cubes effect
+ */
 class RandomPropagation {
 	/**
 	 * Properties to be added to OrthoGrid
 	 * @param {boolean} rebound Sets whether active cubes "rebound" once they hit the edge
 	 * @param {number} speed Number of cubes an active cube moved in one call of mainBehaviour()
 	 * @param {number} maxRaiseHeight Maximum raise height of cubes
-	 * @param {number} maxRaiseRadius Radius of circle around an active cube that determines how far it should be raised
+	 * @param {number} maxRaiseRadius Radius of circle around an active cube that determines how far adjacent cubes should be raised
 	 * @param {number} limit If rebound is false, this is the max number of active cubes allowed to exist
 	 * @param {number} chanceIf rebound is false, this is the chance of an active cube spawning
 	 */
@@ -402,12 +443,12 @@ class RandomPropagation {
 		this.limit = limit;
 		this.chance = chance;
 
-		this.behaviour = "Random Propagation";
+		this.behaviour = "randompropagation";
 	}
 
 	/**
 	 * Properties to be added to OrthoCube
-	 * @param {Object} cube OrthoCube object
+	 * @param {OrthoCube} cube OrthoCube object
 	 */
 	initCubeProperties = function(cube) {
 		cube.step = 0;
@@ -536,20 +577,27 @@ class RandomPropagation {
 	}
 }
 
+/**
+ * Behaviour profile of rippling cubes effect
+ */
 class Ripple {
+	/**
+	 * Properties to be added to OrthoGrid
+	 * @param {number} amplitude Maximum amplitude of cubes
+	 * @param {number} radius Radius of circle around an active cube that determines how far adjacent cubes should be raised
+	 */
 	constructor(amplitude, radius) {
 		this.amplitude = amplitude;
 		this.radius = radius;
 		this.time = 0;
 
-		this.behaviour = "Ripple";
+		this.behaviour = "ripple";
 	}
 
 	/**
 	 * Properties to be added to OrthoCube (this method is empty but must exist for ducktyping to work)
-	 * @param {Object} cube Uneeded for this profile
 	 */
-	initCubeProperties = function(cube) {}
+	initCubeProperties = function() {}
 
 	/**
 	 * Main behaviour of profile
@@ -583,25 +631,39 @@ class Ripple {
 		}
 	}
 
+	/**
+	 * Randomly selects a cube to be active which begins ripple effect
+	 */
 	setRandomActive = function() {
 		this.cubes[ Math.floor(this.cubes.length * Math.random()) ][ Math.floor(this.cubes[0].length * Math.random()) ].active = true;
 	}
 }
 
+/**
+ * Behaviour profile of Game Of Life effect
+ */
 class GameOfLife {
+	/**
+	 * Properties to be added to OrthoGrid
+	 * @param {number} maxRaiseHeight  Maximum raise height of cubes
+	 */
 	constructor(maxRaiseHeight) {
 		this.maxRaiseHeight = maxRaiseHeight;
 
-		this.behaviour = "Game Of Life";
+		this.behaviour = "gameoflife";
 	}
 	
 	/**
 	 * Properties to be added to OrthoCube (this method is empty but must exist for ducktyping to work)
-	 * @param {Object} cube Uneeded for this profile
 	 */
-	initCubeProperties = function(cube) {}
+	initCubeProperties = function() {}
 
-	mainBehaviour = function(cur_frac) {
+	/**
+	 * Main behaviour of profile
+	 * @param {number} cur_frac Number that goes from 0 to 1
+	 */
+	mainBehaviour = function() {
+		// Add the states of all cubes to a map
 		let currentState = new Map();
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
@@ -610,6 +672,7 @@ class GameOfLife {
 			}
 		}
 
+		// Apply rules to all the cubes
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				let cube = this.cubes[col][row];
@@ -619,6 +682,11 @@ class GameOfLife {
 		}
 	}
 
+	/**
+	 * Sets random cubes to active based on a limit and a probability of being active
+	 * @param {number} limit Maximum number of active cubes allowed to be set
+	 * @param {number} chance Probability of cube becoming active
+	 */
 	setRandomActive = function(limit, chance) {
 		let count = 0;
 		for (let col=0; col<this.cubes.length; col++) {
@@ -630,18 +698,35 @@ class GameOfLife {
 		}
 	}
 
+	/**
+	 * Applies the rules to a cube
+	 * @param {OrthoCube} cube OrthoCube cube
+	 * @param {Map<OrthoCube, boolean>} currentState Map storing the current active state of the cubes
+	 */
 	_applyRules = function(cube, currentState) {
 		let aliveCount = this._countNeighbours(cube, currentState);
 		if (cube.active) {
+			// Any live cell with fewer than two live neighbors dies, as if by underpopulation
 			if (aliveCount < 2) cube.active = false;
+
+			// Any live cell with two or three live neighbors lives on to the next generation
 			else if (aliveCount === 2 || aliveCount === 3) cube.active = true;
+
+			// Any live cell with more than three live neighbors dies, as if by overpopulation
 			else if (aliveCount > 3) cube.active = false;
 		}
 		else {
+			// Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction
 			if (aliveCount === 3) cube.active = true;
 		}
 	} 
 
+	/**
+	 * Counts the neighbours of a given cube
+	 * @param {OrthoCube} cube OrthoCube cube
+	 * @param {Map<OrthoCube, boolean>} currentState Map storing the current active state of the cubes
+	 * @returns 
+	 */
 	_countNeighbours = function(cube, currentState) {
 		let aliveCount = 0;
 		for (let j=-1; j<=1; j++) {
@@ -661,7 +746,8 @@ class GameOfLife {
 }
 
 // Cube profiles
-const cProfile1 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
+const cProfile1 = new CubeProfile(canvasHeight/22, canvasHeight * 0.01, 120);
+const cProfile2 = new CubeProfile(canvasHeight/20, canvasHeight * 0.01, 120);
 
 // Render profiles
 const rProfile1 = new RenderProfile(false, [50, 50, 50], [255, 10, 128], 0, cProfile1.edgeLength * 1.5); // propagation
@@ -706,13 +792,20 @@ const grid = new OrthoGrid(
 	ripple
 );
 
-grid.setRandomActive(70, 0.3);
+// Default arrangement for ripple behaviour
+if (grid.behaviour === "ripple") {
+	grid.cubes[0][3].active = true;
+	grid.cubes[5][2].active = true;
+	grid.cubes[9][0].active = true;
+	grid.cubes[12][9].active = true;
+	grid.cubes[11][7].active = true;
+}
 
-const BGC = 30;// rP2[63, 157, 77, 62];
+
+const BGC = 30;
 
 function draw_one_frame(cur_frac) {
 	background(BGC);
 	grid.draw();
 	grid.doBehaviour(cur_frac);
-	// noLoop();
 }
