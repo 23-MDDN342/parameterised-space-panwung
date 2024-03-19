@@ -313,7 +313,7 @@ class OrthoGrid {
 		// Add new properties to cubes
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
-				this.cubes[col][row].active = false;
+				this.setActive(row, col, false)
 				this.initCubeProperties(this.cubes[col][row]);
 			}
 		}
@@ -645,7 +645,11 @@ class Ripple {
 	 * Randomly selects a cube to be active which begins ripple effect
 	 */
 	setRandomActive = function() {
-		this.cubes[ Math.floor(this.cubes.length * Math.random()) ][ Math.floor(this.cubes[0].length * Math.random()) ].active = true;
+		this.setActive(
+			Math.floor(this.cubes[0].length * Math.random()),
+			Math.floor(this.cubes.length * Math.random()),
+			true
+		);
 	}
 }
 
@@ -702,7 +706,7 @@ class GameOfLife {
 		for (let col=0; col<this.cubes.length; col++) {
 			for (let row=0; row<this.cubes[0].length; row++) {
 				if (count < limit) {
-					if (Math.random() > 1 - chance) this.cubes[col][row].active = true;
+					if (Math.random() > 1 - chance) this.setActive(row, col, true)
 				}
 			}
 		}
@@ -755,58 +759,48 @@ class GameOfLife {
 	}
 }
 
-// Cube profiles
-const cProfile1 = new CubeProfile(canvasHeight/22, canvasHeight * 0.01, 120);
+// Cube profile
+const cProfile = new CubeProfile(canvasHeight/22, canvasHeight * 0.01, 120);
 
 // Render profiles
-const rProfile1 = new RenderProfile(false, [0, 0, 255], [255, 0, 0], 0, cProfile1.edgeLength * 1.5); // propagation
-const rProfile2 = new RenderProfile(false, [255, 180, 74], [255, 255, 255], -30, cProfile1.edgeLength * 1); // ripple
-const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cProfile1.edgeLength * 1); // gof
+const rProfile1 = new RenderProfile(false, [0, 0, 255], [255, 0, 0], 0, cProfile.edgeLength * 1.5); // Propagation
+const rProfile2 = new RenderProfile(false, [255, 180, 74], [255, 255, 255], -30, cProfile.edgeLength * 1); // Ripple
+const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cProfile.edgeLength * 1); // GoL
 
 // Structure profiles
-const sProfile1 = new StructureProfile( // propagation
-	canvasWidth/2, 
-	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 13 / 2,
-	13,
-	13, 
-);
-const sProfile2 = new StructureProfile( // ripple
-	canvasWidth/2, 
-	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 15 / 2,
-	15,
-	15
-);
-const sProfile3 = new StructureProfile( // gof
-	canvasWidth/2, 
-	canvasHeight/2 + (cProfile1.edgeLength + cProfile1.separation) * Math.cos( cProfile1.viewAngleDeg / 2 ) * 16 / 2,
-	16,
-	16
-);
+
+// Propagation
+const ROW_COL_COUNT_1 = 13; 
+const sProfile1 = new StructureProfile(canvasWidth/2, canvasHeight/2 + (cProfile.edgeLength + cProfile.separation) * Math.cos( cProfile.viewAngleDeg / 2 ) * ROW_COL_COUNT_1 / 2, ROW_COL_COUNT_1, ROW_COL_COUNT_1);
+
+// Ripple
+const ROW_COL_COUNT_2 = 16;
+const sProfile2 = new StructureProfile(canvasWidth/2, canvasHeight/2 + (cProfile.edgeLength + cProfile.separation) * Math.cos( cProfile.viewAngleDeg / 2 ) * ROW_COL_COUNT_2 / 2, ROW_COL_COUNT_2, ROW_COL_COUNT_2);
+
+// GoL
+const ROW_COL_COUNT_3 = 16;
+const sProfile3 = new StructureProfile(canvasWidth/2, canvasHeight/2 + (cProfile.edgeLength + cProfile.separation) * Math.cos( cProfile.viewAngleDeg / 2 ) * ROW_COL_COUNT_3 / 2, ROW_COL_COUNT_3, ROW_COL_COUNT_3);
 
 // Behaviour profiles
-const randomPropagation = new RandomPropagation( 
-	false, 1, cProfile1.edgeLength * 1.5, 6, 3, 0.05
-);
-const ripple = new Ripple(
-	cProfile1.edgeLength * 3, 19
-);
-const gof = new GameOfLife(cProfile1.edgeLength * 0.9);
+const randomPropagation = new RandomPropagation(false, 1, cProfile.edgeLength * 1.5, 6, 3, 0.05);
+const ripple = new Ripple(cProfile.edgeLength * 3, 19);
+const GoL = new GameOfLife(cProfile.edgeLength * 0.9);
 
 // Grid
 const grid = new OrthoGrid(
 	sProfile2, 
-	cProfile1,
+	cProfile,
 	rProfile2, 
 	ripple
 );
 
 // Default arrangement for ripple behaviour
 if (grid.behaviour === "ripple") {
-	grid.cubes[0][3].active = true;
-	grid.cubes[5][2].active = true;
-	grid.cubes[9][0].active = true;
-	grid.cubes[12][9].active = true;
-	grid.cubes[11][7].active = true;
+	grid.setActive(3, 0, true);
+	grid.setActive(0, 9, true);
+	grid.setActive(2, 5, true);
+	grid.setActive(9, 12, true);
+	grid.setActive(7, 11, true);
 }
 
 // Background colour
