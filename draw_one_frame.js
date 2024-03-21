@@ -823,23 +823,23 @@ function loadRandomPropagation() {
 	grid.loadBehaviourProfile(randomPropagation);
 	grid.build();
 }
+function randomPropagationRebound() {
+	try { grid.rebound = !grid.rebound; }
+	catch (Error) {}
+}
 
 function loadRipple() {
 	grid.loadStructureProfile(sProfile2);
 	grid.loadBehaviourProfile(ripple);
 	grid.build();
-
-	grid.setRandomActive();
-	grid.setRandomActive();
-	grid.setRandomActive();
-	grid.setRandomActive();
-	grid.setRandomActive();
 }
 
 function loadGoL() {
 	grid.loadStructureProfile(sProfile3);
 	grid.loadBehaviourProfile(GoL);
 	grid.build();
+}
 
-	grid.setRandomActive(70, 0.25);
+function spawnRandom() {
+	grid.setRandomActive(75, 0.25);
 }
