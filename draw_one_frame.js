@@ -765,7 +765,7 @@ const cProfile = new CubeProfile(canvasHeight/22, canvasHeight * 0.01, 120);
 // Render profiles
 const rProfile1 = new RenderProfile(false, [0, 0, 255], [255, 0, 0], 0, cProfile.edgeLength * 1.5); // Propagation
 const rProfile2 = new RenderProfile(false, [255, 180, 74], [255, 255, 255], -30, cProfile.edgeLength * 1); // Ripple
-const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cProfile.edgeLength * 1); // GoL
+const rProfile3 = new RenderProfile(false, [80, 80, 80], [255, 255, 255], 0, cProfile.edgeLength * 1); // GoL
 
 // Structure profiles
 
