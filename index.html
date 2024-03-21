@@ -15,10 +15,24 @@
     <script language="javascript" type="text/javascript" src="canvas_size_normal.js"></script>
     <script language="javascript" type="text/javascript" src="draw_one_frame.js"></script>
     <script language="javascript" type="text/javascript" src="code.js"></script>
-    <style> body {padding: 0; margin: 0;} </style>
+    <style> 
+        body { 
+            margin: 0; 
+            padding: 0; 
+        } 
+        pre { 
+            color: white; 
+        } 
+        button {
+            border: none;
+            background-color:grey;
+            color:white;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
-<body style="background-color:white">
+<body style="background-color:black">
     <div class="outer">
         <div class="inner">
             <div id="canvasContainer"></div>
@@ -32,6 +46,7 @@
         <button type="button" onclick="loadRenderProfile1()">Heatmap</button>
         <button type="button" onclick="loadRenderProfile2()">Gold</button>
         <button type="button" onclick="loadRenderProfile3()">Greyscale</button>
+        <button type="button" onclick="toggleDimension()">Toggle Dimension</button>
     </pre>
 
     <pre>

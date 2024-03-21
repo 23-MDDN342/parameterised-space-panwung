@@ -778,7 +778,7 @@ const ROW_COL_COUNT_2 = 16;
 const sProfile2 = new StructureProfile(canvasWidth/2, canvasHeight/2 + (cProfile.edgeLength + cProfile.separation) * Math.cos( cProfile.viewAngleDeg / 2 ) * ROW_COL_COUNT_2 / 2, ROW_COL_COUNT_2, ROW_COL_COUNT_2);
 
 // GoL
-const ROW_COL_COUNT_3 = 16;
+const ROW_COL_COUNT_3 = 19;
 const sProfile3 = new StructureProfile(canvasWidth/2, canvasHeight/2 + (cProfile.edgeLength + cProfile.separation) * Math.cos( cProfile.viewAngleDeg / 2 ) * ROW_COL_COUNT_3 / 2, ROW_COL_COUNT_3, ROW_COL_COUNT_3);
 
 // Behaviour profiles
@@ -817,6 +817,7 @@ function draw_one_frame(cur_frac) {
 function loadRenderProfile1() { grid.loadRenderProfile(rProfile1); }
 function loadRenderProfile2() { grid.loadRenderProfile(rProfile2); }
 function loadRenderProfile3() { grid.loadRenderProfile(rProfile3); }
+function toggleDimension() { grid.dimensional = ! grid.dimensional; }
 
 function loadRandomPropagation() {
 	grid.loadStructureProfile(sProfile1);
