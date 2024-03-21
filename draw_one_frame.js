@@ -654,7 +654,7 @@ class Ripple {
 }
 
 /**
- * Behaviour profile of Game Of Life effect
+ * Behaviour profile of Game of Life effect
  */
 class GameOfLife {
 	/**
@@ -770,7 +770,7 @@ const rProfile3 = new RenderProfile(true, [80, 80, 80], [255, 255, 255], 0, cPro
 // Structure profiles
 
 // Propagation
-const ROW_COL_COUNT_1 = 13; 
+const ROW_COL_COUNT_1 = 17; 
 const sProfile1 = new StructureProfile(canvasWidth/2, canvasHeight/2 + (cProfile.edgeLength + cProfile.separation) * Math.cos( cProfile.viewAngleDeg / 2 ) * ROW_COL_COUNT_1 / 2, ROW_COL_COUNT_1, ROW_COL_COUNT_1);
 
 // Ripple
@@ -793,6 +793,7 @@ const grid = new OrthoGrid(
 	rProfile2, 
 	ripple
 );
+grid.consoleFeedback = false; // Turn off debug text
 
 // Default arrangement for ripple behaviour
 if (grid.behaviour === "ripple") {
@@ -810,4 +811,33 @@ function draw_one_frame(cur_frac) {
 	background(BGC);
 	grid.draw();
 	grid.doBehaviour(cur_frac);
+}
+
+function loadRandomPropagation() {
+	grid.loadStructureProfile(sProfile1);
+	grid.loadRenderProfile(rProfile1);
+	grid.loadBehaviourProfile(randomPropagation);
+	grid.build();
+}
+
+function loadRipple() {
+	grid.loadStructureProfile(sProfile2);
+	grid.loadRenderProfile(rProfile2);
+	grid.loadBehaviourProfile(ripple);
+	grid.build();
+
+	grid.setRandomActive();
+	grid.setRandomActive();
+	grid.setRandomActive();
+	grid.setRandomActive();
+	grid.setRandomActive();
+}
+
+function loadGoL() {
+	grid.loadStructureProfile(sProfile3);
+	grid.loadRenderProfile(rProfile3);
+	grid.loadBehaviourProfile(GoL);
+	grid.build();
+
+	grid.setRandomActive(50, 0.2);
 }
