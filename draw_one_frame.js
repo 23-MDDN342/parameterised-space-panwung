@@ -806,23 +806,26 @@ if (grid.behaviour === "ripple") {
 
 // Background colour
 const BGC = 30;
-
 function draw_one_frame(cur_frac) {
 	background(BGC);
 	grid.draw();
 	grid.doBehaviour(cur_frac);
 }
 
+// HTML Loading functions
+
+function loadRenderProfile1() { grid.loadRenderProfile(rProfile1); }
+function loadRenderProfile2() { grid.loadRenderProfile(rProfile2); }
+function loadRenderProfile3() { grid.loadRenderProfile(rProfile3); }
+
 function loadRandomPropagation() {
 	grid.loadStructureProfile(sProfile1);
-	grid.loadRenderProfile(rProfile1);
 	grid.loadBehaviourProfile(randomPropagation);
 	grid.build();
 }
 
 function loadRipple() {
 	grid.loadStructureProfile(sProfile2);
-	grid.loadRenderProfile(rProfile2);
 	grid.loadBehaviourProfile(ripple);
 	grid.build();
 
@@ -835,9 +838,8 @@ function loadRipple() {
 
 function loadGoL() {
 	grid.loadStructureProfile(sProfile3);
-	grid.loadRenderProfile(rProfile3);
 	grid.loadBehaviourProfile(GoL);
 	grid.build();
 
-	grid.setRandomActive(50, 0.2);
+	grid.setRandomActive(70, 0.25);
 }
